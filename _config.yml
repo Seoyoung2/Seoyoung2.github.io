@@ -2,7 +2,7 @@ title:              My Blog
 email:              ww0111@naver.com
 description:        아직 준비중입니당
 author:             Seoyoung Lee
-baseurl:            ""
+baseurl:            ""  #'/'로 끝나야함
 url:                "https://seoyoung2.github.io"
 
 # Social Profiles
@@ -11,7 +11,7 @@ facebook_username:  seoyoung.lee.1291
 instagram_username:  twowestzero
 
 # Add your google-analytics ID here to activate google analytics
-google_analytics:   UA-XXXXXXXXX-X # out your google-analytics code
+google_analytics:   UA-161582913-1 # out your google-analytics code
 
 # Build settings
 markdown:           kramdown
@@ -20,3 +20,4 @@ paginate_path:      "/posts/page:num/"
 plugins:
   - jekyll-feed
   - jekyll-paginate
+exclude:
