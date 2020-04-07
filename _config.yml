@@ -5,6 +5,8 @@ author:             Seoyoung Lee
 baseurl:            ""  #'/'로 끝나야함
 url:                "https://seoyoung2.github.io"
 
+category_list: [ blog, nodejs, github ]
+
 # Social Profiles
 github_username:    Seoyoung2
 facebook_username:  seoyoung.lee.1291
@@ -20,4 +22,3 @@ paginate_path:      "/posts/page:num/"
 plugins:
   - jekyll-feed
   - jekyll-paginate
-exclude:
