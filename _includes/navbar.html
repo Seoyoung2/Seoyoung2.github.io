@@ -17,21 +17,8 @@
         <li class="nav-item">
           <a class="nav-link" href="{{ '/posts' | relative_url }}">Posts</a>
         </li>
-        <li class="dropdown nav-item">
-          <a href="{{ site.baseurl }}{{ link.url }}" class="dropdown-toggle nav-link" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Category<span class="caret"></span></a>
-          <ul class="dropdown-menu">
-            {% capture tags %}
-              {% for tag in site.categories %}
-                {{ tag[0] }}
-              {% endfor %}
-            {% endcapture %}
-            {% assign sortedtags = tags | split:' ' | sort %}
-            {% for tag in sortedtags %}
-              <li class="dropdown-list">
-                <a href="/category/{{ tag }}/index">{{ tag }} ({{ site.categories[tag] | size }})</a>
-              </li>
-            {% endfor %}
-          </ul>
+        <li class="nav-item">
+          <a class="nav-link" href="{{'/category' | relative_url }}">Category</a>
         </li>
       </ul>
     </div>

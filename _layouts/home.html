@@ -29,12 +29,6 @@ layout: default
 
         {{ content }}
 
-        <ul>
-          {% for category in site.categories %}
-          <li><a href="{{ site.url }}/category/{{ category | first | slugify }}/index.html">{{ category | first }}</a></li>
-          {% endfor %}
-        </ul>
-
         <!-- Home Post List -->
         {% for post in site.posts limit : 5 %}
 
