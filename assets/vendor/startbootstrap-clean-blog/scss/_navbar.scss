@@ -25,6 +25,21 @@
       }
     }
   }
+  .dropdown-list {
+    @media only screen and (min-width: 992px) {
+      text-align: center;
+      text-transform: uppercase;
+      > a {
+        font-weight: 600;
+        font-size: 14px;
+      }
+    }
+  }
+  .dropdown-menu {
+    @media only screen and (min-width: 992px) {
+      background-color: rgb(252, 240, 225);
+    }
+  }
   @media only screen and (min-width: 992px) {
     border-bottom: 1px solid transparent;
     background: transparent;
