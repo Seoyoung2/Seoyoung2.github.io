@@ -27,12 +27,6 @@ layout: default
     <div class="row">
       <div class="col-lg-8 col-md-10 mx-auto">
 
-        <ul>
-          {% for category in site.categories %}
-              <li><a href="{{ site.baseurl }}/{{ category | first }}">{{ category | first }} ({{ category | last | size }})</a></li>
-          {% endfor %}
-        </ul>
-
         {{ content }}
 
         <!-- Home Post List -->
