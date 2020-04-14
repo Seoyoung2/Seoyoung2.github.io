@@ -24,9 +24,10 @@ layout: default
   <div class="container">
     <div class="row">
       <div class="col-lg-8 col-md-10 mx-auto">
-
+        <p>{{ page.description }}</p>
           {% assign category = page.category | default: page.title %}
           {% for post in site.categories[category] %}
+          <hr>
           <article class="post-preview">
             <a href="{{ post.url | prepend: site.baseurl | replace: '//', '/' }}">
               <h2 class="post-title">{{ post.title }}</h2>
@@ -45,10 +46,7 @@ layout: default
               on {{ post.date | date: '%B %d, %Y' }} &middot; {% include read_time.html content=post.content %}
             </p>
           </article>
-  
-          <hr>
           {% endfor %}
-
       </div>
     </div>
   </div>
