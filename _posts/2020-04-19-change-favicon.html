@@ -1,0 +1,26 @@
+---
+layout: post
+title: "favicon 설정하기"
+subtitle: 블로그에 나만의 favicon을 설정해봅시다.
+category: "github-blog"
+background: '/img/bg-posts/favicon.jpg'
+comments: true
+---
+
+<h4>favicon이란?</h4>
+<p>favicon이란 인터넷 웹 브라우저의 주소창에 표시되는 웹사이트나 웹페이지를 대표하는 아이콘이다.</p>
+<p>내가 블로그에 적용시킨 Jekyll 테마에는 favicon이 기본적으로 설정이 되어있지 않았다. 그래서 직접 설정해보기로 했다!</p>
+
+<h4>favicon 설정하는 법</h4>
+<p>Jekyll 블로그에서는 기본 폴더에 <code>favicon.ico</code> 라는 이름으로 favicon으로 설정하고 싶은 이미지를 저장하고
+html문서의 head 태그 안에 아래 코드를 적용한다.</p>
+{% highlight html %}
+<!-- Favicon -->
+<link rel="shortcut icon" href="/img/favicon.ico">
+{% endhighlight %}
+<p>나는 img 폴더 안에 favicon을 저장해서 위와 같이 경로를 설정했다.</p>
+
+<h4>결과 화면</h4>
+<img class="img-fluid" src="/img/posts/favicon_result.png">
+<p>위 화면과 같이 원하는 favicon을 설정할 수 있다. 지금은 하고싶은 아이콘이 없어서 아무거나 했지만 바꿀 예정이당</p>
+
