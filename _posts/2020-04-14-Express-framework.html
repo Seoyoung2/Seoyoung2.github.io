@@ -20,4 +20,25 @@ $ npm init          // npm을 통해 project initialization
 $ npm i express	    // express 설치
 {% endhighlight %}
 
+<p><code>npm init</code>을 실행하면 name, description, author 등 정보를 입력하라고 나오는데 다 enter를 쳐서 넘어가도 정상적으로 init 된다.</p>
 
+<h2 class="section-heading">2. Node.js로 Server 생성</h2>
+
+<p>index.js라는 파일을 만들어 아래 코드를 작성한다.</p>
+
+{% highlight JavaScript %}
+const express = require('express')
+const app = express()
+
+app.get('/', (req, res) => {
+  res.send('Hello World')
+})
+
+app.listen(3000, () => {
+  console.log("Express server has started on port 3000")
+})
+{% endhighlight %}
+
+<p>저장 후, 터미널에서 <code>node index.js</code>를 실행한다.</p>
+
+<p>이제 브라우저에서 <code>http://localhost:3000</code> 또는 <code>http://127.0.0.1:3000</code>으로 접근하면 화면이 뜨는 것을 확인 할 수 있다.</p>

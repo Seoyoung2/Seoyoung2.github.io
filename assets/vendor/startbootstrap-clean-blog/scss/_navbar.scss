@@ -26,13 +26,11 @@
     }
   }
   .dropdown-list {
-    @media only screen and (min-width: 992px) {
-      text-align: center;
-      padding: 2px 0px;
-      > a {
-        font-weight: 600;
-        font-size: 14px;
-      }
+    text-align: center;
+    padding: 2px 0px;
+    > a {
+      font-weight: 600;
+      font-size: 14px;
     }
   }
   .dropdown-menu {
