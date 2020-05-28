@@ -1,0 +1,83 @@
+---
+layout: post
+title: "python으로 BFS/DFS 구현하기"
+subtitle: python으로 BFS(너비 우선 탐색)와 DFS(깊이 우선 탐색)를 구현해본다.
+category: "algorithm"
+comments: true
+---
+<p>BFS와 DFS의 개념을 알아보자. 이 두가지 알고리즘은 모두 그래프를 탐색하는데 사용되는 "탐색 알고리즘"이다.</p>
+<p>BFS와 DFS를 구현하기 위해서는 일단 그래프를 코드로 표현해야한다. 그래프의 노드들과 각 노드들과 연결관계가 있는 노드를 모두 표현해주면 된다. 방법은 여러가지가 있지만 딕셔너리와 리스트 그리고 세트 자료구조를 사용해서 표현해본다.</p>
+{% highlight python %}
+graph = {
+    'A': ['B'],
+    'B': ['A', 'C', 'H'],
+    'C': ['B', 'D'],
+    'D': ['C', 'E', 'G'],
+    'E': ['D', 'F'],
+    'F': ['E'],
+    'G': ['D'],
+    'H': ['B', 'I', 'J', 'M'],
+    'I': ['H'],
+    'J': ['H', 'K'],
+    'K': ['J', 'L'],
+    'L': ['K'],
+    'M': ['H']
+}
+{% endhighlight %}
+{% highlight python %}
+graph_list = {1: set([3, 4]),
+    2: set([3, 4, 5]),
+    3: set([1, 5]),
+    4: set([1]),
+    5: set([2, 6]),
+    6: set([3, 5])}
+{% endhighlight %}
+
+<br>
+<br>
+<h3>1. BFS(Breath First Search, 너비 우선 탐색)</h3>
+<p>한 단계씩 나아가면서 해당 노드와 같은 레벨에 있는 노드들(즉, 형제 노드들)을 먼저 순회하는 방식</p>
+<p><b>큐(queue)</b> 자료구조를 사용 : 노드를 방문하면서 인접한 노드 중 방문하지 않았던 노드의 정보만 큐에 넣어 먼저 큐에 들어있던 노드부터 방문</p>
+<p>파이썬에서 큐를 <code>list</code> 자료구조를 사용해 <code>list.append(x), list.pop(0)</code>과 같이 구현할 수 있다. 하지만 이 방법은 시간복잡도가 O(N)이므로 매우 비효율적이다. </p>
+<p>따라서 <code>collections</code>라이브러리의 <code>deque</code>를 사용하면 <code>deque.popleft()</code>를 사용해 효율적으로 큐 자료구조를 사용할 수 있다.</p>
+
+{% highlight python %}
+from collections import deque
+
+def bfs(graph, start_node):
+    visited = []
+    queue = deque([start_node])
+ 
+    while queue:
+        node = queue.popleft()
+        if node not in visited:
+            visited.append(node)
+            queue.extend(graph[node])
+            #queue += graph[node] - set(visited)
+ 
+    return visited
+{% endhighlight %}
+
+
+
+<br>
+<br>
+<h3>2. DFS(Depth First Search, 깊이 우선 탐색)</h3>
+<p>한 노드의 자식을 타고 끝까지 순회한 다음에, 다시 돌아와서 다른 형제의 자식을 타고 내려가며 순회하는 방식</p>
+<p><b>스택(stack)</b> 자료구조를 사용 : 먼저 방문한 노드에 연결된 노드보다 현재 방문한 노드에 연결된 노드를 방문해야 한 방향으로 갈 수 있다.</p>
+{% highlight python %}
+def dfs(graph, start_node):
+    visited = []
+    stack = [start_node]
+ 
+    while stack:
+        node = stack.pop()
+        if node not in visited:
+            visited.append(node)
+            stack.extend(graph[node])
+            #stack += graph[node] - set(visited)
+ 
+    return visited
+{% endhighlight %}
+<br>
+<br>
