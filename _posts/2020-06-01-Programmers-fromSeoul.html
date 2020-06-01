@@ -1,0 +1,58 @@
+---
+layout: post
+title: "[python] 서울에서 경산까지 (Programmers)"
+subtitle: 프로그래머스의 "서울에서 경산까지"문제(Level4)를 동적계획법을 사용하여 해결한다.
+category: "algorithm"
+comments: true
+---
+
+<h4>문제(Link) : <a href="https://programmers.co.kr/learn/courses/30/lessons/42896">https://programmers.co.kr/learn/courses/30/lessons/42899</a></h4>
+<hr>
+<p>프로그래머스에 있는 <b>동적계획법(Dynamic Programming)</b> 문제이다. Knapsack문제와 뭔가 비슷하지만 knapsack문제는 선택하냐 안하냐 둘중 하나라면, 이 문제는 도보 또는 자전거의 선택이다. 먼저 점화식을 세웠다. </p>
+{% highlight python %}
+# dp[i][j] : i번째 도시를 j의 시간으로 도착했을 때 얻을 수 있는 최대 모금액
+dp[i][j] = max(dp[i][j], dp[i-1][j-travel[i][0]]+travel[i][1], dp[i-1][j-travel[i][2]]+travel[i][3])
+
+# 알아보기 쉬운 표현으로는 아래와 같은 점화식으로 나타낼 수 있다.
+dp[i][j+travel[i][0]] = max(dp[i][j+travel[i][0]], dp[i-1][j]+travel[i][1])
+dp[i][j+travel[i][2]] = max(dp[i][j+travel[i][2]], dp[i-1][j]+travel[i][3])
+answer = max(dp[i])
+{% endhighlight %}
+<p>주의할 점은 반복문을 돌 때마다 걸린 시간(j)이 매개변수로 주어진 K보다 작은지 확인해야 한다는 것이다.</p>
+
+{% highlight python %}
+def solution(K, travel):
+    dp = [[0 for _ in range(K+1)] for _ in range(len(travel))]      #구간별로 배열 하나씩
+    dp[0][travel[0][0]] = travel[0][1]
+    dp[0][travel[0][2]] = travel[0][3]
+    for i in range(1, len(travel)):
+        t_walk, v_walk, t_bike, v_bike = travel[i]
+        for j in range(K):
+            if j+t_walk <= K:     #도보
+                dp[i][j+t_walk] = max(dp[i][j+t_walk], dp[i-1][j]+v_walk)
+            if j+t_bike <= K:     #자전거
+                dp[i][j+t_bike] = max(dp[i][j+t_bike], dp[i-1][j]+v_bike)
+    return max(dp[i])
+
+# [도보 시간, 도보 모금액, 자전거 시간, 자전거 모금액]
+print(solution(1650, [[500, 200, 200, 100], [800, 370, 300, 120], [700, 250, 300, 90]]))    #660
+print(solution(3000, [[1000, 2000, 300, 700], [1100, 1900, 400, 900], [900, 1800, 400, 700], [1200, 2300, 500, 1200]])) #5900
+print(solution(100, [[1, 1, 1, 1], [99, 1000, 1, 1], [1, 1, 1, 1]]))    #3
+{% endhighlight %}
+
+<p>이렇게 코드를 구현했을 때, 프로그래머스에서는 통과가 되었지만 질문목록에서 가져온 하나의 테스트케이스를 통과하지 못했다. 위 코드에서 세번째 테스트케이스 <code>solution(100, [[1, 1, 1, 1], [99, 1000, 1, 1], [1, 1, 1, 1]])</code>의 경우 시간이 K를 넘어가도 따로 예외처리를 해주지 않았다.</p>
+<p>그리고 세가지 테스트케이스 모두 통과되는 코드를 찾았다. 코드 상의 차이가 있다면 위 코드는 j를 총 걸린시간으로 설정하였지만 아래에서는 남은시간으로 설정하고 있다.</p>
+{% highlight python %}
+def solution(K, travel):
+    n = len(travel)
+    memo = [[0 for _ in range(K+1)] for _ in range(n+1)]
+    for i in range(1, n+1):
+        t_walk, v_walk, t_bike, v_bike = travel[i-1]
+        for j in range(K+1):
+            walk = memo[i-1][j-t_walk]+v_walk if j>=t_walk and memo[i-1][j-t_walk]!=-1 else -1
+            bike = memo[i-1][j-t_bike]+v_bike if j>=t_bike and memo[i-1][j-t_bike]!=-1 else -1
+            memo[i][j]=max(walk, bike)
+    return memo[n][K]
+{% endhighlight %}
+<br>
+<br>
