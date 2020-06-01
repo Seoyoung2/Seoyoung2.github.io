@@ -1,0 +1,46 @@
+---
+layout: post
+title: "[python] 더 맵게(Programmers), heapq 자료구조"
+subtitle: 프로그래머스의 "더 맵게"문제(Level2)를 Heap을 사용하여 해결한다.
+category: "algorithm"
+comments: true
+---
+
+<h4>문제(Link) : <a href="https://programmers.co.kr/learn/courses/30/lessons/42626">https://programmers.co.kr/learn/courses/30/lessons/42626</a></h4>
+<hr>
+<p>프로그래머스에 있는 <b>힙(Heap)</b> 문제이다. 처음에 문제를 읽었을 때 아래 코드와 같이 리스트를 정렬해가면서 해결하면 되겠다 생각을 했다.</p>
+{% highlight python %}
+def solution(scoville, K):
+    answer = 0
+    scoville.sort()
+    while scoville[0] < K:
+        if len(scoville) < 2:
+            return -1
+        answer += 1
+        scoville.append(scoville[0] + 2*scoville[1])
+        scoville = scoville[2:]
+        scoville.sort()
+    return answer
+{% endhighlight %}
+
+<p>하지만 이렇게 코드를 구현했을 때, 정확성에서는 완벽했지만 효율성 테스트에서 시간초과를 통과하지 못했다.</p>
+<p>그래서 검색 결과, 파이썬의 내장 자료구조인 <code>heapq</code>라는 것을 발견해 사용하였다. 코드는 아래와 같다.</p>
+{% highlight python %}
+import heapq
+
+def solution(scoville, K):
+    answer = 0
+    heapq.heapify(scoville)
+    while scoville[0] < K:
+        if len(scoville) == 1:
+            return -1
+        answer += 1
+        a = heapq.heappop(scoville)
+        b = heapq.heappop(scoville)
+        heapq.heappush(scoville, a + 2 * b)
+    return answer
+{% endhighlight %}
+<p>이렇게 파이썬의 내장모듈인 <code>heapq</code>를 사용하면 시간복잡도가 O(logN)으로 sort()를 사용한 O(N)보다 효율적으로 문제를 해결할 수 있다.</p>
+
+<br>
+<br>
