@@ -1,0 +1,51 @@
+---
+layout: post
+title: "[python] 디스크 컨트롤러 (Programmers)"
+subtitle: 프로그래머스의 "디스크 컨트롤러" 문제(Level3)를 Heap을 사용하여 해결한다.
+category: "algorithm"
+comments: true
+---
+
+<h4>문제(Link) : <a href="https://programmers.co.kr/learn/courses/30/lessons/42627">https://programmers.co.kr/learn/courses/30/lessons/42627</a></h4>
+<hr>
+<p>프로그래머스에 있는 <b>힙(Heap)</b> 문제이다. heapq 라이브러리를 사용했고 처리한 작업 수(count), 최근 작업이 끝난 시간(last), 총 작업시간(time) 등 여러 변수가 사용되어 고려할게 많았던 문제였다.</p>
+{% highlight python %}
+import heapq
+
+def solution(jobs):
+    count, last, answer = 0, -1, 0
+    heap = []
+    jobs.sort()
+    # 시작시간 초기화
+    time = jobs[0][0]
+    while count < len(jobs):
+        for s, t in jobs:
+            if last < s <= time:
+                # 작업 소요시간으로 min heap을 만들기 위해 (t, s) 푸시
+                heapq.heappush(heap, (t, s))
+        # 바로 수행할 수 있는 작업이 있는 경우
+        if len(heap) > 0:
+            count += 1
+            last = time
+            term, start = heapq.heappop(heap)
+            time += term
+            answer += (time - start)
+        # 바로 수행할 수 있는 작업이 없는 경우
+        else:
+            time += 1
+    return answer//len(jobs)
+{% endhighlight %}
+<br>
+<p>실행해본 테스트케이스는 아래와 같다.</p>
+{% highlight python %}
+print(solution([[0, 3], [1, 9], [2, 6]]))               # 9
+print(solution([[0, 3], [4, 3], [10, 3]]))              # 3
+print(solution([[0, 10], [2, 3], [9, 3]]))              # 9
+print(solution([[1, 10], [3, 3], [10, 3]]))             # 9
+print(solution([[0, 10]]))                              # 10
+print(solution([[0, 10], [4, 10], [5, 11], [15, 2]]))   # 15
+print(solution([[24, 10], [18, 39], [34, 20], [37, 5], [47, 22], [20, 47], [15, 2], [15, 34], [35, 43], [26, 1]]))   # 74
+print(solution([[24, 10], [18, 39], [34, 20], [37, 5], [47, 22], [20, 47], [15, 34], [15, 2], [35, 43], [26, 1]]))   # 74
+{% endhighlight %}
+<br>
+<br>
