@@ -1,0 +1,85 @@
+---
+layout: post
+title: "[python] 구슬 탈출 2 (Baekjoon, 13460)"
+subtitle: 백준의 "구슬 탈출 2"문제(13460)를 BFS를 사용하여 해결한다.
+category: "algorithm"
+comments: true
+---
+
+<h4>문제(Link) : <a href="https://www.acmicpc.net/problem/13460">https://www.acmicpc.net/problem/13460</a></h4>
+<hr>
+<p>백준에 있는 <b>너비 우선 탐색(BFS)</b> 문제이다. deque 라이브러리를 사용해 queue를 만들었고 queue에는 빨간 구슬의 위치(rx, ry)와 파란 구슬의 위치(bx, by)를 모두 넣고 BFS를 적용했다.</p>
+<p><code>movemove(x, y, dx, dy)</code>는 보드를 한 번 기울였을 때, 구슬들이 다음으로 위치할 자리를 반환해주는 함수이다. 구슬이 탈출했을 경우 0, 0, 0을 반환해서 반복문을 끝내는 등 처리를 해주었다. 또한, move 값은 구슬이 움직인 횟수로 같은 자리에 구슬들이 위치할 경우 더 적게 움직인 구슬이 한칸 뒤로 가도록 설정했다.</p>
+<p>또 알아야 할 점은 구슬들의 방문체크를 하는 visit 변수이다. 처음에는 빨간 구슬만 체크를 해주는 방식을 적용하였는데 그렇게 되면 빨간구슬은 가만히 있고 파란 구슬만 움직이는 경우를 그냥 넘어가기 때문에 실패했다. 그리고 빨간 구슬과 파란 구슬이 동시에 위치하는 자리를 방문체크 해줘야 한다는 것을 알았다.</p>
+<p>그래서 <b>dictionary 형태</b>로 visit변수를 만들어서 (rx, ry, bx, by)로 저장하고 현재 구슬들의 위치가 dictionary 안에 있는지 확인하는 방법과, <b>visit[rx][ry][bx][by]</b>라는 4차원 배열을 만들어 배열 안의 값을 확인하는 방법을 사용했다.
+    그 중, 아래 코드는 dictionary 형태로 방문체크를 한 코드이다. (시간 test를 해봤지만 차이 별로 안남)</p>
+
+{% highlight python %}
+from sys import stdin
+from collections import deque
+
+n, m = map(int, stdin.readline().split())
+graph = [list(stdin.readline()) for _ in range(n)]
+for i in range(n):
+    for j in range(m):
+        if graph[i][j] == 'R':
+            graph[i][j] = '.'
+            red = [i, j]
+        elif graph[i][j] == 'B':
+            graph[i][j] = '.'
+            blue = [i, j]
+
+
+def movemove(x, y, dx, dy):
+    move = 0
+    while graph[x+dx][y+dy] != '#':
+        # 구멍으로 탈출할 경우 0,0 return
+        if graph[x+dx][y+dy] == 'O':
+            return 0, 0, 0
+        x += dx
+        y += dy
+        move += 1
+    return x, y, move
+
+
+def bfs():
+    # 빨간 구슬과 파란 구슬 동시에 방문체크 해야함
+    visit = {}
+    queue = deque([red + blue])
+    visit[red[0], red[1], blue[0], blue[1]] = 0
+    while queue:
+        rx, ry, bx, by = queue.popleft()
+        for dx, dy in (-1, 0), (1, 0), (0, -1), (0, 1):      # 상하좌우
+            nrx, nry, rmove = movemove(rx, ry, dx, dy)
+            nbx, nby, bmove = movemove(bx, by, dx, dy)
+            # 두 공 모두 또는 파란 공만 탈출한 경우
+            if not nbx and not nby:
+                continue
+            # 빨간 공만 탈출한 경우
+            elif not nrx and not nry:
+                print(visit[rx, ry, bx, by] + 1)
+                return
+            # 두 공이 같은 위치에 있는 경우
+            elif nrx == nbx and nry == nby:
+                # 이동거리가 적은 구슬을 한 칸 뒤로
+                if rmove > bmove:
+                    nrx -= dx
+                    nry -= dy
+                else:
+                    nbx -= dx
+                    nby -= dy
+            # visit하지 않았으면 queue에 append
+            if (nrx, nry, nbx, nby) not in visit:
+                visit[nrx, nry, nbx, nby] = visit[rx, ry, bx, by] + 1
+                queue.append([nrx, nry, nbx, nby])
+        # answer에 값을 넣었거나 queue가 비었거나 움직인 횟수가 10이상이면 그만
+        if not queue or visit[rx, ry, bx, by] >= 10:
+            print(-1)
+            return
+
+
+bfs()
+{% endhighlight %}
+
+<br>
+<br>
