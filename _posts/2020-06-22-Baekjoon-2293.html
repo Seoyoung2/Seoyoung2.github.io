@@ -1,0 +1,37 @@
+---
+layout: post
+title: "[python] 동전 1 (Baekjoon, 2293)"
+subtitle: 백준의 "동전 1"문제(2293)를 Dynamic Programming을 사용하여 해결한다.
+category: "algorithm"
+comments: true
+---
+
+<h4>문제(Link) : <a href="https://www.acmicpc.net/problem/2293">https://www.acmicpc.net/problem/2293</a></h4>
+<hr>
+<p>백준에 있는 <b>동적계획법(DP)</b> 문제이다. 문제를 보고 점화식을 잘 세우는게 중요한데 이 문제는 점화식을 생각해 내기가 어려웠다.</p>
+<p>동적 계획법(DP)라면 일단 '전체의 문제'를 '부분 문제'로 나눈 후, 부분 문제들을 해결하며 그 결과값들을 메모이제이션하는 것이 기본이다.</p>
+<p><code>dp[i]</code>를 동전들을 사용해서 i원을 만드는 경우의 수 라고 정의하고 i값을 증가시키며 <code>dp[k]</code>를 구할 것이다. 새로운 동전이 추가될 때마다 이 과정을 반복한다.</p>
+<p>여기서 알아야 하는 두가지는<br>
+    1. c원 동전을 기준으로 메모이제이션 할 때에는 c원보다 작은 가치의 배열은 고려할 필요가 없으므로 <b>dp[c]부터 순회</b>한다.<br>
+    2. c원 동전 단 하나만 사용해서 j원을 만들 떄에는 c==j이기 때문에 dp[j-c] 즉, <b>dp[0]은 1로 설정</b>해놓아 1가지 경우의 수가 있음을 나타낸다.<br>
+</p>
+
+{% highlight python %}
+from sys import stdin
+
+n, k = map(int, stdin.readline().split())
+
+coin = [0] * n
+for i in range(n):
+    coin[i] = int(stdin.readline())
+
+dp = [1] + [0] * k
+for i in range(n):
+    for j in range(coin[i], k+1):
+        dp[j] += dp[j-coin[i]]
+
+print(dp[k])
+{% endhighlight %}
+
+<br>
+<br>
