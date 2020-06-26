@@ -1,0 +1,45 @@
+---
+layout: post
+title: "[python] 내리막길 (Baekjoon, 1520)"
+subtitle: 백준의 "내리막길"문제(1520)를 DFS와 Dynamic Programming을 사용하여 해결한다.
+category: "algorithm"
+comments: true
+---
+
+<h4>문제(Link) : <a href="https://www.acmicpc.net/problem/1520">https://www.acmicpc.net/problem/1520</a></h4>
+<hr>
+<p>처음 문제를 보고 DFS(깊이우선탐색) 문제라고 생각했지만 DFS로 제출한 결과, 답은 맞지만 각 칸에 대한 상하좌우 칸을 모두 중복해서 연산해야해서 시간초과가 나왔다. 
+    단순히 방문한 칸을 다시 방문하지 않는 로직이 아니기 때문에 visit상태를 체크하는 방법도 틀렸다.</p>
+<p>이것저것 검색해본 결과, 이 문제는 DFS(깊이우선탐색)와 DP(동적계획법)를 혼합해서 해결하는 문제였고 좀 더 심화된 방문상태를 dp배열에 저장했다.</p>
+<p><code>dp[i][j]</code>를 M[i][j]의 위치까지 가는 내리막길의 경우의 수라고 생각하고, 반복 계산을 방지하기 위해 -1로 초기화했다.</p>
+<p>dp배열에 대해 알아야 하는 것은 dp[i][j]의 값이<br>
+    1. <b>0</b>이면 목적지까지 갈 수 있는 경로가 없으므로 0을 반환<br>
+    2. <b>1이상의 값</b>이면 이전에 연산한 방문 경로가 있으므로 해당 값을 반환해서 더해준다<br>
+    3. <b>-1</b>이면 방문하지 않은 경로이므로 정상적으로 DFS + DP 수행 <br>
+</p>
+
+{% highlight python %}
+from sys import stdin
+
+m, n = map(int, stdin.readline().split())
+M = [list(map(int, stdin.readline().split())) for _ in range(m)]
+dp = [[-1] * n for _ in range(m)]
+
+
+def dfs(x, y):
+    if x == m - 1 and y == n - 1:
+        return 1
+    if dp[x][y] == -1:
+        dp[x][y] = 0
+        for dx, dy in (1, 0), (-1, 0), (0, 1), (0, -1):
+            if 0 <= x+dx < m and 0 <= y+dy < n:
+                if M[x+dx][y+dy] < M[x][y]:
+                    dp[x][y] += dfs(x+dx, y+dy)
+    return dp[x][y]
+
+
+print(dfs(0, 0))
+{% endhighlight %}
+
+<br>
+<br>
