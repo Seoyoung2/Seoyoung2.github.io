@@ -1,0 +1,61 @@
+---
+layout: post
+title: "[python] 알파벳 (Baekjoon, 1987)"
+subtitle: 백준의 "알파벳"문제(1987)를 DFS를 사용하여 해결한다.
+category: "algorithm"
+comments: true
+---
+
+<h4>문제(Link) : <a href="https://www.acmicpc.net/problem/1987">https://www.acmicpc.net/problem/1987</a></h4>
+<hr>
+<p>DFS로 깊이우선탐색을 하며 그래프를 탐색하는 방법으로 문제를 해결한다. 처음에는 <code>set</code> 자료형으로 한 경로에서 거쳐간 알파벳들을 담는 방법, <code>list</code>에 무작정 삽입하는 방법으로 실행했지만, 
+ 방문체크를 할 때마다 <code>not in</code>코드를 사용하였더니 시간초과가 발생했다. </p>
+<p>그래서 구글링으로 힌트를 얻어 alpha를 26칸의 list('A'~'Z')로 정의한 후, 0/1로 방문체크를 했다. 여기에서는 추가적으로 'A'를 0으로, 'B'를 1로 mapping하는 로직으로써 아래 코드를 추가하였다.</p>
+{% highlight python %}
+# map(lambda x: ord(x)-65, stdin.readline().rstrip())
+# 아래와 같이 borad와 alpha를 정의
+board = [list(map(lambda x: ord(x)-65, stdin.readline().rstrip())) for _ in range(r)]
+alpha = [0] * 26
+
+# 방문체크를 할 때는 alpha[board[n][m]] 사용
+alpha[board[0][0]] = 1
+{% endhighlight %}
+
+<p>DFS로 그래프를 순회하지만 한가지 경로를 순회한 후, 또다른 경로를 순회해서 더 큰 cnt를 찾아야하기 때문에 한가지 path를 끝까지 탐색했다면 방문여부를 다시 0으로 설정해야한다. 방법은 아래 코드와 같다.</p>
+{% highlight python %}
+# 갈 수 있는 경로가 있는 경우 dfs()안에서 이런식으로 다시 dfs() 재귀호출
+alpha[board[x+dx][y+dy]] = 1
+dfs(x+dx, y+dy, cnt+1)
+alpha[board[x+dx][y+dy]] = 0
+{% endhighlight %}
+
+<br>
+<h4>전체 코드</h4>
+{% highlight python %}
+from sys import stdin
+
+r, c = map(int, stdin.readline().split())
+board = [list(map(lambda x: ord(x)-65, stdin.readline().rstrip())) for _ in range(r)]
+alpha = [0] * 26
+
+
+def dfs(x, y, cnt):
+    global res
+    if cnt > res:   res = cnt
+    for dx, dy in (1, 0), (-1, 0), (0, 1), (0, -1):
+        if 0 <= x + dx < r and 0 <= y + dy < c:
+            if not alpha[board[x + dx][y + dy]]:
+                alpha[board[x+dx][y+dy]] = 1
+                dfs(x+dx, y+dy, cnt+1)
+                alpha[board[x+dx][y+dy]] = 0
+
+
+res = 1
+alpha[board[0][0]] = 1
+dfs(0, 0, 1)
+
+print(res)
+{% endhighlight %}
+
+<br>
+<br>
