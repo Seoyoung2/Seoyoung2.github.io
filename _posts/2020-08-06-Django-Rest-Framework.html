@@ -1,58 +1,153 @@
 ---
 layout: post
-title: "[DRF] Django REST framework"
+title: "[DRF] Django REST framework Overview"
 subtitle: Django REST framework 사용법을 익히고 사용해본다.
 category: "Django"
 comments: true
 ---
 
-<h3>플로이드와샬 알고리즘 (Floyd Warshall)</h3>
+<h3>Django REST framework (Overview)</h3>
 <br>
-<p>최단거리를 구하는 알고리즘이지만, BFS가 한 정점에서부터 모든 정점으로의 최단거리라면 플로이드와샬은 그래프에서 <b>모든 정점 사이의 최단거리</b>를 구하는 것이 가능하다. 그래프의 간선들 중 음의 가중치가 존재해도 실행된다. 시간 복잡도는 3중 for문으로 인한 <b>O(V^3)</b>을 가진다. 많은 시간이 소요되지만 이 알고리즘을 이용해야하는 상황이 존재한다.</p>
-<p>플로이드 와샬의 기본 개념은 i에서 출발해 j로 가는 경로의 가중치를 저장하는 2차원 배열을 채우는데,  i를 출발해 j로 바로 가는 것보다 k를 거쳐 j로 가는 게 효율적일 경우(저렴할 경우) 해당 값을 갱신해준다. k의 값을 가장 바깥 for문에서 반복해주므로 하나의 경유지 k만 거치는 것뿐만 아니라 여러 경유지를 거치는 경로또한 포함한다.</p>
+<p>django rest framework는 REST API 컨셉을 쉽게 만들 수 있도록 도와주지만, 이것이 REST API의 전부는 아니다.</p>
+
+<p>아래는 DRF를 사용하지 않고 API서버를 구현하는 방법이다.</p>
 {% highlight python %}
-# k : 경유지
-for k in range(1, v+1):
-    # i : 출발지    
-    for i in range(1, v+1):
-        # j : 목적지
-        for j in range(1, v+1):
-            dp[i][j] = min(dp[i][j], dp[i][k] + dp[k][j])
+#
+# myapp/models.py
+#
+from django.db import models
+
+class Post(models.Model):
+    message = models.TextField()
+
+
+#
+# myapp/forms.py
+#
+from django import forms
+from .models import Post
+
+class PostForm(forms.ModelForm):
+    class Meta:
+        model = Post
+        fields = '__all__'
+
+
+#
+# myapp/views.py
+#
+from django.http import HttpResponse, JsonResponse
+from django.http import QueryDict
+from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+from .models import Post
+from .forms import PostForm
+
+@csrf_exempt
+def post_list(request):
+    if request.method == 'GET':
+        qs = Post.objects.all()
+        # 수동 JSON 직렬화
+        data = [{'pk': post.pk, 'message': post.message} for post in qs] 
+        return JsonResponse(data, safe=False)
+    elif request.method == 'POST':
+        form = PostForm(request.POST)
+        if form.is_valid():
+            post = form.save()
+            return HttpResponse(status=201) # created status code
+        data = form.errors
+        return JsonResponse(data, status=400)   # bad request status code
+
+@csrf_exempt
+def post_detail(request, pk):
+    post = get_object_or_404(Post, pk=pk)
+
+    if request.method == 'GET':
+        return JsonResponse({'pk': post.pk, 'message': post.message})
+    elif request.method == 'PUT':
+        put = QueryDict(request.body)
+        form = PostForm(put, instance=post)
+        if form.is_valid():
+            post = form.save()
+            data = {'pk': post.pk, 'message': post.message}
+            return JsonResponse(data=data, status=201)
+        return JsonResponse(form.errors)
+    elif request.method == 'DELETE':
+        post.delete()
+        return HttpResponse('', status=204)
+
+
+#
+# myapp/urls.py
+#
+from django.conf.urls import url
+from .views import post_list, post_detail
+
+urlpatterns = [
+    url(r'^post/$', post_list, name='post-list'),
+    url(r'^post/(?P<pk>\d+)/$', post_detail, name='post-detail'),
+]
 {% endhighlight %}
-<hr>
 <br>
-<p>플로이드 와샬 알고리즘의 예시로 아래 <b><a href="https://www.acmicpc.net/problem/11404">플로이드 문제(link)</a></b>를 풀어보자.</p>
-<img class="img-fluid" src="/img/posts/11404.PNG">
 
-<p>가장 기본적인 플로이드 와샬 알고리즘을 이용한 문제이다. 주의할 점은 최소 비용을 구하는 것이기 때문에 2차원 배열은 큰수, 즉 INF로 초기화한다.</p>
+<p>DRF는 REST API 구현을 도와주는 "Class Based View"를 제공해주는 프레임워크이다. 먼저 DRF를 사용하기 위해 django REST framework를 설치한다.</p>
+{% highlight Bash %}
+$ pip install djangorestframework
+{% endhighlight %}
+
+<p>그리고 <code>settings.py</code>에 INSTALLED_APPS 부분에도 'rest_framework'를 추가하고 코드를 구현해본다.</p> 
+<p>DRF에서는 forms.py파일 대신 <code>serializers.py</code>를 사용한다. serialize를 한다는 것은 객체와 같은 보기 힘든 데이터를 JSON이나 XML처럼 보기 쉬운 데이터로 바꾸어 통신하게 해주는 것을 말한다.</p>
+<p>DRF에서는 <code>views.py</code>에서 ViewSet이라는 class를 사용해서 편하게 작성할 수 있다. ViewSet에서는 <code>@csrf_exempt</code> 토큰을 빼주어야 한다.</p>
+<p>또한, view 대신에 viewset을 사용해서 자동적으로 URLconf를 우리의 API에 생성할 수 있기 때문에 <code>urls.py</code>에서도 
+    그냥 라우터 클래스에 등록해주기만 하면 된다. 또, API URL들을 기본 제공하는 기능보다 더 추가하고싶다면 URL conf를 명시해주면 된다.</p>
 {% highlight python %}
-from sys import stdin
-from math import inf
+#
+# myapp/models.py
+#
+from django.db import models
 
-n = int(stdin.readline())
-m = int(stdin.readline())
+class Post(models.Model):
+    title = models.CharField(max_length=100)
 
-# 이동 최소비용을 저장할 2차원 배열
-cost = [[inf] * n for _ in range(n)]
-for _ in range(m):
-    a, b, c = map(int, stdin.readline().split())
-    cost[a-1][b-1] = min(cost[a-1][b-1], c)
 
-# 플로이드 와샬 알고리즘 적용
-k in range(n):
-    cost[k][k] = 0
-    for i in range(n):
-        for j in range(n):
-            cost[i][j] = min(cost[i][j], cost[i][k]+cost[k][j])
+#
+# myapp/serializers.py (Form과 유사)
+#
+from rest_framework import serializers
+from .models import Post
 
-# 결과 출력
-for row in cost:
-    for i in range(n):
-        # 갈 수 없는 경로인 경우, 0 출력
-        if row[i] == inf:
-            row[i] = 0
-        print(row[i], end=" ")
-    print()
+# ModelForm 대신에 ModelSerializer
+class PostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = '__all__'
+
+
+#
+# myapp/views.py
+#
+from rest_framework import viewsets
+from .models import Post
+from .serializers import PostSerializer
+
+class PostViewSet(viewsets.ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+
+
+#
+# myapp/urls.py
+#
+from django.conf.urls import include
+from rest_framework.routers import DefaultRouter
+from .views import PostViewSet
+
+router = DefaultRouter()
+router.register(r'post', PostViewSet)
+
+urlpatterns = [
+    url(r'', include(router.urls)),
+]
 {% endhighlight %}
 <br>
 <br>
