@@ -1,0 +1,174 @@
+---
+layout: post
+title: "[DRF] ViewSet과 Router"
+subtitle: Django REST framework의 ViewSet과 Router에 대해 공부한다.
+category: "Django"
+comments: true
+---
+
+<h3>ViewSet</h3>
+<br>
+<p>ViewSet은 2개의 뷰를 만들어주는 보다 확장된 형태의 CBV(Class Based View)이다.</p>
+
+<p>모든 CBV는 <code>.as_view({'http_method': '처리할 멤버함수'})</code>를 호출하여 해당 http_method를 지원하는 뷰 함수를 생성한다. 1개의 뷰 함수를 생성하므로, <b>하나의 URL</b>만을 처리할 수 있다.</p>
+<p>DRF에서는 <code>ReadOnlyModelViewSet</code>과 <code>ModelViewSet</code>의 2가지 뷰셋을 지원한다. 아래에서는 <code>ModelViewSet</code>에 대한 예시를 살펴본다.</p>
+<p>우선 app을 만들고 migrate후, 모델과 이에 대한 Serializer를 만든다.</p>
+
+{% highlight python %}
+# models.py
+
+from django.db import models
+
+class Post(models.Model):
+    title = models.CharField(max_length=100)
+    content = models.TextField()
+    is_public = models.BooleanField(default=False)
+    create_at = models.DateTimeField(auto_now_add=True)
+    update_at = models.DateTimeField(auto_now=True)
+
+
+# Serializers.py
+
+from rest_framework.serializers import ModelSerializer
+from .models import Post
+    
+class PostSerializer(ModelSerializer):
+    class Meta:
+        model = Post
+        fields = '__all__'
+{% endhighlight %}
+<br>
+
+<p>다음으로 ViewSet을 정의한다.</p>
+{% highlight python %}
+# views.py
+
+from rest_framework.viewsets import ModelViewSet
+from .models import Post
+from .serializers import PostSerializer
+
+class PostViewSet(ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer  
+
+
+# REST API 규격에 맞춘 URL 매핑
+
+# List Route
+post_list = PostViewSet.as_view({
+    'get': 'list',
+    'post': 'create',
+})
+
+# Detail Route
+post_detail = PostViewSet.as_view({
+    'get': 'retrieve',
+    'put': 'update',
+    'patch': 'partial_update',
+    'delete': 'destroy',
+})
+{% endhighlight %}
+<br>
+<p>이렇게 만들어진 뷰 함수는 다른 FBV와 동일하게 URLConf에 매핑할 수 있다.</p>
+{% highlight python %}
+# urls.py
+
+from django.urls import path, include
+from . import views
+
+urlpatterns = [
+    path('post/', views.post_list),
+    path('post/<int:pk>/', views.post_detail),
+]
+{% endhighlight %}
+<br>
+<br>
+
+<h3>Router</h3>
+<br>
+<p>기존에는 as_view()를 통해 각 request method마다 대응되는 함수를 연결시켜 주었다면 router는 단지 <code>PostViewSet</code>을 <code>Router</code>에 등록하기만 하면, 이를 알아서 연결해준다.
+디폴트 매핑은 위와 같이 <b>list route</b>와 <b>detail route</b>가 있다.</p>
+<p>Router에는 뷰셋만 등록할 수 있으며(뷰는 불가능) 하나의 Router에 다수의 뷰셋을 등록할 수 있다.</p>
+
+<p>위의 urls.py를 아래와 같이 Router를 사용하도록 수정했다. </p>
+{% highlight python %}
+# urls.py
+
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from . import views
+
+router = DefaultRouter()
+router.register(r'post',views.PostViewSet)
+# /post/ 주소에 대해 URL Reverse 이름은 post-list이 등록
+# /post/10/ 류의 주소에 대해 URL Reverse 이름은 post-detail이 등록
+
+urlpatterns = [
+    path('',include(router.urls)),
+]
+{% endhighlight %}
+<br>
+
+<p>Router를 사용하면 더 이상 <code>as_view()</code>를 통해 단일 뷰를 뽑아낼 필요가 없다.</p> 
+{% highlight python %}
+# views.py
+
+from rest_framework.viewsets import ModelViewSet
+from .models import Post
+from .serializers import PostSerializer
+
+class PostViewSet(ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer  
+{% endhighlight %}
+<br>
+<br>
+
+<h3>ViewSet에 API추가하기</h3>
+<br>
+<p>디폴트 매핑의 경우, list route 에 대해서 2개, detail route 에 대해서 4개에 대해서 매핑을 해주게 된다. 여기서 추가적인 API를 만들어 매핑하는 방법이 있다.</p>
+<p><code>ViewSet</code>의 멤버함수로 추가 API를 구현한 후, decorator를 붙여주면 된다. 이때 URL은 Router가 알아서 결정한다.</p>
+<h5>@action decorator</h5>
+<br>
+{% highlight python %}
+from rest_framework.decorators import action
+{% endhighlight %}
+
+<p>위와 같이 <code>action decorator</code>를 import해주고 첫번째 인자로 detail, 두번째 인자로 methods를 지정한다.</p>
+<p><b>detail</b>이 True인 경우 pk값을 지정해주는 detail route에 등록이 되고, False인 경우에는 목록단위로 적용되는 list route에 등록이 된다. 이 때 detail의 값에 따라 Router가 URL을 결정하는 방법이 다르다.</p>
+<p><b>methods</b>인자에는 request method를 지정해줄 수 있다. 디폴트 값은 get이다.</p>
+
+<p>아래 코드는 is_public값이 True인 레코드만 필터링하는 <code>public_list</code>와 특정 레코드의 is_public을 True로 수정하는 <code>set_public</code>을 정의했다.</p>
+{% highlight python %}
+# views.py
+
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from .models import Post
+from .serializers import PostSerializer
+
+class PostViewSet(ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer   
+
+    # url : post/public_list/
+    @action(detail=False)
+    def public_list(self, request):
+        qs = self.queryset.filter(is_public=True)
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
+    
+    # url : post/{pk}/set_public/
+    @action(detail=True, methods=['patch'])
+    def set_public(self, request, pk):
+        instance = self.get_object()
+        instance.is_public = True
+        instance.save()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+{% endhighlight %}
+
+
+<br>
+<br>
