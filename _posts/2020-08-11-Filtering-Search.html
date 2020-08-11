@@ -1,0 +1,76 @@
+---
+layout: post
+title: "[DRF] Filtering과 Search"
+subtitle: Django REST framework의 Filtering과 Search에 대해 공부한다.
+category: "Django"
+comments: true
+---
+
+<h3>Filtering</h3>
+<br>
+<p>목록을 조회하는 ListAPIView에서 필터링하는 방법에 대해 알아본다.</p>
+
+<p>먼저 <b>self.request</b>를 통해 <b>HttpRequest</b>를 참조해, 필터링을 하는데 필요한 인자들을 얻을 수 있다.</p>
+<p>1. <b>self.request.user</b> : 현재 로그인한 유저 instance에 접근, 로그인이 안되어 있을 경우에는 AnonymousUser 인스턴스 반환
+<br>2. <b>self.request.GET</b> : 요청 GET 인자들
+<br>3. <b>self.request.query_params</b> : <code>self.request.GET</code>과 동일한 값 얻지만 더 가독성이 높기 때문에 DRF에서 지원
+<br>4. <b>self.kwargs</b> : URL Capture된 인자를 획득<br>
+{% highlight python %}
+urlpatterns = [
+    path('post/', views.PostListAPIView.as_view()),
+    path('post/<int:pk>/',views.PostDetailAPIView.as_view()),
+]
+{% endhighlight %}
+위와 같이 urlpatterns가 정의되어 있을 때, <code>localhost:8000/post/1/</code>로 접속하면 <code>self.kwargs</code>에는 dictionary형태로 <b>{'pk': '1'}</b>가 저장되어 있으며 
+key값으로 value값에 접근이 가능하다.(self.kwargs['pk']로 1이라는 값 얻을 수 있음)
+</p>
+<br>
+
+<h5>get_queryset</h5>
+<p>queryset인자를 지정하고 상황에 따라 filtering이 필요한 경우에는 <code>get_queryset</code>함수를 재정의할 수 있다.</p>
+{% highlight python %}
+# views.py
+
+from rest_framework.viewsets import ModelViewSet
+from .models import Post
+from .serializers import PostSerializer
+
+class PostViewSet(ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if self.request.user.is_authenticated:
+            qs = qs.filter(author=self.request.user)
+        else:
+            qs = qs.none()      # empty result
+        return qs
+{% endhighlight %}
+<p>위 코드는 <code>get_queryset</code>함수를 재정의하여 로그인한 유저가 있는 경우 그 유저가 작성한 post만 보여주고 로그인한 유저가 없는 경우에는 empty result를 반환한다.</p>
+<br>
+<br>
+<hr>
+
+<h3>Search</h3>
+<br>
+<p>DRF에서는 Django Admin의 Search 기능과 유사한 검색기능을 제공한다. 이는 별도의 검색엔진을 사용하는 것이 아니라, DBMS의 LIKE/ILIKE 조건절을 활용한다.</p>
+{% highlight python %}
+# views.py
+
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.filters import SearchFilter
+from .models import Post
+from .serializers import PostSerializer
+
+class PostViewSet(ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+
+    filter_backends = [SearchFilter]
+    # 검색 키워드를 지정했을 때, 매칭을 시도할 필드
+    search_fields = ['title']
+{% endhighlight %}
+
+<br>
+<br>
