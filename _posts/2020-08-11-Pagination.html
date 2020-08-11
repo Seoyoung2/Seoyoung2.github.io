@@ -1,0 +1,68 @@
+---
+layout: post
+title: "[DRF] Pagination 처리"
+subtitle: Django REST framework의 Pagination을 처리하는 방법에 대해 공부한다.
+category: "Django"
+comments: true
+---
+
+<h3>Pagination</h3>
+<br>
+<p>레코드 갯수가 많은 경우 하나의 API 요청으로 모든 레코드를 얻는 것은 피해야한다. 이런 경우에 여러 페이지에 나눠서 request를 처리할 수 있다.</p>
+<p>DRF에서는 아래와 같은 페이징 기법을 지원해주고 있다. 두 방법 모두 url의 get parameter를 이용하여 페이징을 지원한다.</p>
+
+<p>1. <b>PageNumberPagination</b> : page 인자를 통해 페이징 처리
+<br>2. <b>LimitOffsetPagination</b> : limit 인자를 통해 페이징 처리
+</p>
+<p>두 방법 중 PageNumberPagination이 더 많이 쓰이는 페이징 기법이므로 이에 대해 알아본다.</p>
+<br>
+
+<h5>전역 설정을 통한 Pagination</h5>
+<p>우리가 상속받는 <code>settings.py</code>에는 페이징에 대한 필드가 있지만 디폴트 값으로 None이 설정되어 있다. 페이징을 사용하려면
+이를 재정의하여 어느 pagination을 적용할지와 그에 대한 parameter 값을 지정해준다.</p>
+{% highlight python %}
+# settings.py
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 3, 
+}
+{% endhighlight %}
+
+<br>
+<p>settings를 통해 위와 같이 설정을 해주면 모든 view에 대해서 같은 설정을 할 수 밖에 없다. 따라서 각각 API에 대해 pagination을 개별적으로 
+    설정하는 방법을 알아본다.
+</p>
+<br>
+<h5>개별 설정을 통한 Pagination</h5>
+<p>전역으로 설정된 pagination을 커스텀하기 위해서는 각 뷰에서 pagination설정을 해서 전역설정을 덮어써야한다.</p>
+<p>우선 <code>pagination.py</code> 파일을 만들어 pagination 설정을 해준다.</p>
+{% highlight python %}
+# pagination.py
+
+from rest_framework.pagination import PageNumberPagination
+
+class PostPageNumberPagination(PageNumberPagination):
+    page_size = 2
+{% endhighlight %}
+
+<br>
+<p>view에서는 위에서 정의한 클래스를 임포트한 후, <code>pagination_class</code>로 이를 지정만 해주면 된다.</p>
+{% highlight python %}
+# views.py
+
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.filters import SearchFilter
+from .models import Post
+from .serializers import PostSerializer
+from .pagination import PostPageNumberPagination
+
+
+class PostViewSet(ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    pagination_class = PostPageNumberPagination
+{% endhighlight %}
+
+<br>
+<br>
