@@ -11,6 +11,7 @@ comments: true
 <p>DFS로 깊이우선탐색을 하며 그래프를 탐색하는 방법으로 문제를 해결한다. 처음에는 <code>set</code> 자료형으로 한 경로에서 거쳐간 알파벳들을 담는 방법, <code>list</code>에 무작정 삽입하는 방법으로 실행했지만, 
  방문체크를 할 때마다 <code>not in</code>코드를 사용하였더니 시간초과가 발생했다. </p>
 <p>그래서 구글링으로 힌트를 얻어 alpha를 26칸의 list('A'~'Z')로 정의한 후, 0/1로 방문체크를 했다. 여기에서는 추가적으로 'A'를 0으로, 'B'를 1로 mapping하는 로직으로써 아래 코드를 추가하였다.</p>
+
 {% highlight python %}
 # map(lambda x: ord(x)-65, stdin.readline().rstrip())
 # 아래와 같이 borad와 alpha를 정의

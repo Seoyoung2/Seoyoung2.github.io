@@ -11,6 +11,7 @@ comments: true
 <p>Baekjoon 에 있는 <b>BFS / DFS</b> 문제이다. deque 라이브러리를 사용했고 추가로 3개의 벽을 세우는 과정에서 조합(combination) 라이브러리를 사용하였다.</p>
 <p>먼저 벽 3개를 세운 후 바이러스를 큐에 넣는 방식으로  BFS를 진행하였다. 벽 3개를 효과적으로 세우는 방법을 생각해봤지만 별 방법이 없는 것 같았고 
     <code>from itertools import combinations</code> 로 조합을 사용하여 모든 경우의 수를 테스트했다.</p>
+
 {% highlight python %}
 from sys import stdin
 from collections import deque
