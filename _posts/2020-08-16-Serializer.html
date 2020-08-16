@@ -1,0 +1,147 @@
+---
+layout: post
+title: "[DRF] Serializer를 통한 유효성 검사 및 저장"
+subtitle: Django REST framework의 Serializer에 대해 공부한다.
+category: "Django"
+comments: true
+---
+
+<h3>Serializer</h3>
+<br>
+<h5>Serializer의 생성자</h5>
+<p>Serializer는 Django Form과 컨셉/사용법이 유사하다. 하지만 생성자를 지정할 때, 인자 구성이 조금 다르다. Django Form의 생성자는 첫번째 인자로 data를 받으며 ModelForm에서는 instance 인자가 추가로 지정되어 있다.</p>
+<p>반면, Serializer의 생성자는 아래 코드와 같이 첫번째 인자로 instance를 받으며, 두번째 인자로 data를 받는다.</p>
+
+{% highlight python %}
+# rest_framework/serializers.py
+
+class BaseSerializer(Field):
+    def __init__(self, instance=None, data=empty, **kwargs):
+        # 생략
+        
+class Serializer(BaseSeializer):
+  # 생략
+{% endhighlight %}
+
+<p>이렇기 때문에 data 인자만 지정할 때에는 아래 코드와 같이 필수적으로 keyword를 지정해주어야 한다.</p>
+{% highlight python %}
+serializer = PostSerializer(post)
+serializer = PostSerializer(data=request.data)
+serializer = PostSerializer(post, data=reqeust.data)
+serializer = PostSerializer(post, reqeust.data)
+serializer = PostSerializer(reqeust.data) # 오류
+{% endhighlight %}
+
+<br>
+<p><code>data=</code>인자가 주어지면, 다음 순서로 처리된다.</p>
+<p>
+    <b>.is_valid()</b>가 호출이 되면<br>
+    <b>.initial_data</b> 필드에 접근할 수 있고,<br>
+    <b>.validated_data</b> 를 통해 유효성 검증에 통과한 값들에 대한 사전에 접근. <b>.save()</b>시에 사용됨.<br>
+    <b>.errors</b> : 유효성 검사에 대한 오류 내역<br>
+    <b>.data</b> : 유효성 검사 후에, 갱신된 인스턴스에 대한 필드값 사전
+</p>
+<br>
+<h5>serializer.save()</h5>
+
+{% highlight python %}
+def save(self, **kwargs):
+    pass
+{% endhighlight %}
+<p>save()가 호출되면, 유효성 검사를 통과한 <b>.validated_data</b>와 <b>kwargs</b> dict를 합쳐서 DB로의 저장을 시도한다. 이 때, self.instance의 유무에 따라 저장하는 방식이 다르다.</p>
+<p style="margin-left: 50px;">
+    - self.instance 값이 있을 때 : update() 를 통해서 저장<br>
+    - self.instance 값이 없을 때 : create() 를 통해서 저장
+</p>
+<br>
+<hr>
+
+<h3>Validators</h3>
+<br>
+<p>장고 기본 validators과 더불어, DRF에서는 유일성 여부 체크를 도와주는 Validator를 제공하며, queryset 범위를 제한하여 지정 범위 내에서의 유일성 여부를 체크할 수 있다.</p>
+<p>지정 필드가 지정 QuerySet범위에서 Unique한지 체크해주는 UniqueValidator이 있으며, 모델 필드에 <code>unique=True</code> 설정을 통해 자동으로 추가된다.</p>
+<br>
+
+<h5>유효성 검사 예외</h5>
+<p><b>rest_framework.exceptions.ValidationError</b>를 기본으로 사용하며, 이는 응답 상태코드 <b>400</b>으로 처리한다.</p>
+<br>
+
+<h5>Serializer에서 유효성 검사 함수 지정</h5>
+<p>** ModelSerializer를 사용한다면, 유효성 검사 함수는 <b>모델 측에 지정</b>하는 것이 관리측면에서 좋다.</p>
+<p>아래에서는 모델 측이 아닌 Serializer에서 유효성 검사를 하는 예시를 알아본다.</p>
+
+<b>1. Field 에 대한 validator</b>
+<p>validate_{field name} 이름의 함수를 사용하며 특정 필드에 대해 검사한다.</p>
+{% highlight python %}
+# serializers.py
+
+from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+
+class PostSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=100)
+
+    def validate_title(self, value):
+        if '제목' not in value:
+            raise ValidationError('제목이라는 말이 들어가야 합니다.')
+        return value
+{% endhighlight %}
+
+<b>2. object 에 대한 validator</b>
+<p>validate 이름의 함수를 사용하며 다수 필드에 대해 검사한다.</p>
+{% highlight python %}
+class PostSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=100)
+
+    def validate(self, data):
+        if '제목' not in data['title']:
+            raise ValidationError('제목이라는 말이 들어가야 합니다.')
+        return data
+{% endhighlight %}
+<br>
+<br>
+
+<h3>DB 반영을 돕는 perform 함수</h3>
+<p>사용자의 입력과 함께 추가적인 정보(예를 들면, 사용자의 ip)를 함께 DB에 저장해야 하는 경우, perform 함수를 재정의해 커스튬해야한다. </p>
+<p>먼저, 아래와 같이 model을 정의하고 title의 값만 사용자로부터 입력받는다.</p>
+{% highlight python %}
+# models.py
+
+from django.db import models
+
+class Post(models.Model):
+    title = models.CharField(max_length=100)
+    ip = models.GenericIPAddressField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+# serializers.py
+
+from rest_framework.serializers import ModelSerializer
+from .models import Post
+
+class PostSerializer(ModelSerializer):
+    class Meta:
+        model = Post
+        fields = ['title']
+{% endhighlight %}
+<br>
+<p>그리고 ip를 자동으로 추가하기 위해 <code>perform_create</code>를 커스튬한다.</p>
+{% highlight python %}
+# views.py
+
+from rest_framework.viewsets import ModelViewSet
+from .models import Post
+from .serializers import PostSerializer
+
+class PostViewSet(ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(ip=self.request.META['REMOTE_ADDR'])
+{% endhighlight %}
+
+<br>
+<br>
