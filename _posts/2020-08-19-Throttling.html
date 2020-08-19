@@ -1,0 +1,165 @@
+---
+layout: post
+title: "[DRF] Throttling (최대 호출횟수 제한)"
+subtitle: Django REST framework의 Throttling에 대해 공부한다.
+category: "Django"
+comments: true
+---
+
+<h2>Throttling</h2>
+<p>Throttle 는 특정 조건 하에 최대 호출 횟수를 결정하는 클래스다. 이와 관련된 용어로는 Rate(지정 기간 내의 최대 호출 횟수), Scope(각 Rate에 대한 별칭)가 있다.</p>
+<p>Throttle에 대해 자세히 살펴보기 전에 <b>Rate</b>에 대해 알아본다. rate는 <b>'{숫자}/{간격}'</b>과 같이 표기하며 여기서 숫자는 지정 간격내의 최대 요청 제한 횟수이고 
+    간격은 횟수를 초기화하는 시간을 의미한다. 간격 키워드로는 s(초), m(분), h(시), d(일)이 있다.</p>
+
+<br>
+<h5>기본 제공 Throttle</h5>
+<p>
+    1. <b>AnonRateThrottle</b><br>
+    &emsp; - 인증요청에는 제한을 두지 않고, 비인증 요청에는 IP 별로 횟수 제한<br>
+    &emsp; - Throttle 클래스 별로 scope를 1개만 지정할 수 있음<br>
+    &emsp; - 디폴트 scope : 'anon'<br>
+    2. <b>UserRateThrottle</b><br>
+    &emsp; - 인증요청에는 유저 별로 횟수를 제한하고, 비인증 요청에는 IP 별로 횟수 제한<br>
+    &emsp; - Throttle 클래스 별로 scope를 1개만 지정할 수 있음<br>
+    &emsp; - 디폴트 scope : 'user'<br>
+    3. <b>ScopedRateThrottle</b><br>
+    &emsp; - 인증요청에는 유저 별로 횟수를 제한하고, 비인증 요청에는 IP 별로 횟수 제한<br>
+    &emsp; - 여러 APIView내 throttle_scope값을 읽어들여, APIView별로 다른 Scope를 적용
+</p>
+
+<p>기본적으로 적용되어 있는 Throttle 설정 (아무것도 지정되어 있지 않다)</p>
+{% highlight python %}
+# settings.py
+
+REST_FRAMEWORK = {
+    'DEFAULT_THROTTLE_CLASSES': [],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': None,
+        'user': None,
+    },
+}
+{% endhighlight %}
+<br>
+<h4>APIView에 커스텀 Throttle 설정</h4>
+<p>커스텀 Throttle을 설정하기 위해서는 아래와 같이 settings.py에 추가하면 된다. 이제, <b>모든</b> APIView에 대해 최대호출 횟수 제한이 걸린다.</p>
+
+{% highlight python %}
+# 프로젝트/settings.py
+
+REST_FRAMEWORK = {
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'user': '10/day',
+    },
+}
+{% endhighlight %}
+<p>'10/day'라고 RATE를 설정했으므로, 하루에 10번의 요청까지만 허용하고 11번째 요청부터는 거부된다.</p>
+<p>모든 APIView가 아닌 <b>각 APIView 별로</b>도 개별 설정을 할 수 있다. <code>throttle_classes</code>에 해당하는 throttle을 지정해주면 된다.</p>
+{% highlight python %}
+# views.py
+
+from rest_framework.throttling import UserRateThrottle
+
+class PostViewSet(ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    throttle_classes = UserRateThrottle
+{% endhighlight %}
+<br>
+
+<h4>API별로 서로 다른 Rate 적용하기 - "ScopedRateThrottle"</h4>
+<p>API별로 서로 다른 Rate를 적용하기 위해서는 각 API마다 새로운 Throttle 클래스를 만들어서 지정하는 방법도 있지만, <code>ScopedRateThrottle</code>을 사용헤 더욱 간단하게 구현할 수 있다.</p>
+<p>ScopedRateThrottle은 APIView의 throttle_scope값을 읽어들여 적용해주어 커스텀 Throttle을 만들 필요가 없다.</p>
+{% highlight python %}
+# settings.py
+
+REST_FRAMEWORK = {
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.ScopedRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'contact': '1000/day',
+        'upload': '20/day',
+    },
+}
+{% endhighlight %}
+{% highlight python %}
+# views.py
+
+class ContactListView(APIView):
+    throttle_scope = 'contact'
+
+class ContactDetailView(APIView):
+    throttle_scope = 'contact'
+
+class UploadView(APIView):
+    throttle_scope = 'upload'
+{% endhighlight %}
+<br>
+
+<h4>User별로 서로 다른 Rate 적용하기</h4>
+{% highlight python %}
+# settings.py
+
+REST_FRAMEWORK = {
+    'DEFAULT_THROTTLE_RATES': {
+        'premium_user': '1000/day',  # premium 유저는 하루에 1000회 요청 제한
+        'light_user': '10/day',      # light 유저는 하루에 10회 요청 제한
+    },
+}
+{% endhighlight %}
+{% highlight python %}
+# throttling.py
+
+from rest_framework.throttling import UserRateThrottle
+
+class PremiumThrottle(UserRateThrottle):
+    # 본 Throttle에서는 생성자에서 get_rate가져오는 것은 불필요하므로
+    # 생성자 오버로딩을 통해 루틴 제거
+    def __init__(self):
+        pass
+
+    def allow_request(self, request, view):
+        premium_scope = getattr(view, 'premium_scope', None)
+        light_scope = getattr(view, 'light_scope', None)
+
+        # Profile모델에 is_premium_user 필드가 있다고 가정
+        if request.user.profile.is_premium_user: 
+            if not premium_scope:  # premium_scope 미지정 시에는 Throttling제한을 하지않음
+                return True
+            self.scope = premium_scope
+        else:
+            if not light_scope:  # light_scope 미지정 시에는 Throttling제한을 하지않음
+                return True
+            self.scope = light_scope
+
+        self.rate = self.get_rate()
+        self.num_requests, self.duration = self.parse_rate(self.rate)
+
+        return super().allow_request(request, view)
+{% endhighlight %}
+{% highlight python %}
+# views.py
+
+from rest_framework import viewsets
+from .serializers import PostSerializer
+from .throttling import PremiumThrottle
+from .models import Post
+
+class PostViewSet(viewsets.ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+
+    throttle_classes = [PremiumThrottle]
+    premium_scope = 'premium_user'
+    light_scope = 'light_user'
+
+    def perform_create(self, serializer):
+        print(self.request.FILES)
+        serializer.save(author=self.request.user)
+{% endhighlight %}
+
+<br>
+<br>
