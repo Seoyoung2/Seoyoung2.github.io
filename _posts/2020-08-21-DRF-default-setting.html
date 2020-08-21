@@ -1,0 +1,165 @@
+---
+layout: post
+title: "[DRF] rest_framework의 default 설정"
+subtitle: Django REST framework의 default 설정을 살펴본다.
+category: "Django"
+comments: true
+---
+
+<p>rest_framework의 디폴트 설정은 <code>rest_framework/settings.py</code>내 DEFAULTS 사전을 통해 확인할 수 있다.</p>
+<br>
+<br>
+
+<h5>HTTP 최종 응답 생성</h5>
+{% highlight python %}
+DEFAULTS = { 
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer', 
+    ),
+}
+{% endhighlight %}
+<p>
+    - JSONRenderer : JSON 포맷 응답, 실제 서비스 API 응답<br>
+    - BrowsableAPIRenderer : HTML 포맷 응답(웹브라우저), 개발 시에 용이
+</p>
+<br>
+<br>
+
+<h5>HTTP 요청 내역 처리</h5>
+{% highlight python %}
+DEFAULTS = { 
+    'DEFAULT_PARSER_CLASSES': (
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser', 
+        'rest_framework.parsers.MultiPartParser', 
+    ),
+}
+{% endhighlight %}
+<p>
+    - JSONParser : JSON 포맷 요청 처리<br>
+    - FormParser : enctype application/x-www-form-urlencoded 요청 처리<br>
+    - MultiPartParser : encytpe multipart/form-data 요청 처리 (파일 업로드 지원)
+</p>
+<br>
+<br>
+
+<h5>각 HTTP 요청의 인증</h5>
+{% highlight python %}
+DEFAULTS = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication'
+    ),
+}
+{% endhighlight %}
+<p>
+    - SessionAuthentication : 세션을 통해 인증 유저를 찾음<br>
+    - BasicAuthentication : 각 HTTP 요청에 대해 Basic Authentication을 수행
+</p>
+<br>
+<br>
+
+<h5>각 API 호출 권한 체크</h5>
+{% highlight python %}
+DEFAULTS = { 
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.AllowAny', 
+    ),
+}
+{% endhighlight %}
+<p>디폴트 설정으로 모든 접근을 허용(AllowAny)한다.</p>
+<br>
+<br>
+
+<h5>특정 시간 내, 최대 요청수 제한(Throttling)</h5>
+<p>디폴트 설정으로 Throttling이 꺼져있어, 무분별한 API 호출을 막을 수 있다.</p>
+{% highlight python %}
+DEFAULTS = { 
+    'DEFAULT_THROTTLE_CLASSES': (), 
+    'DEFAULT_THROTTLE_RATES': {
+        'user': None,
+        'anon': None,
+    }
+}
+{% endhighlight %}
+<p>
+    - DEFAULT_THROTTLE_CLASSES : 최대 호출를 제한할 로직 (클래스)<br>
+    - DEFAULT_THROTTLE_RATES : 최대 호출 횟수 지정
+</p>
+<br>
+<br>
+
+<h5>페이징 처리</h5>
+{% highlight python %}
+DEFAULTS = { 
+    'DEFAULT_PAGINATION_CLASS': None,
+    'PAGE_SIZE': None
+}
+{% endhighlight %}
+<p>
+    - DEFAULT_PAGINATION_CLASS : 페이징을 처리할 로직 (클래스)<br>
+    - PAGE_SIZE : 1페이지 최대 갯수
+</p>
+<br>
+<br>
+
+<h5>필터(문자열 매칭 검색 기능)</h5>
+{% highlight python %}
+DEFAULTS = { 
+    'DEFAULT_FILTER_BACKENDS': (),
+    'SEARCH_PARAM': 'search',
+    'ORDERING_PARAM': 'ordering',
+}
+{% endhighlight %}
+<p>DB에서 where 조건을 넣어주는 것과 동일한 설정이다. 디폴트로 필터 꺼짐 상태이다.</p>
+<br>
+<br>
+
+<h5>날짜/시간 포맷</h5>
+{% highlight python %}
+from rest_framework import ISO_8601
+
+DEFAULTS = { 
+    # input and output formats
+    'DATE_FORMAT': ISO_8601,
+    'DATE_INPUT_FORMATS': [ISO_8601],
+
+    'DATETIME_FORMAT': ISO_8601,
+    'DATETIME_INPUT_FORMATS': [ISO_8601],
+
+    'TIME_FORMAT': ISO_8601,
+    'TIME_INPUT_FORMATS': [ISO_8601],
+}
+{% endhighlight %}
+<p>날짜/시간 포맷은 모두 동일하게 ISO_8601로 설정되어 있다.</p>
+<br>
+<br>
+
+<h5>인코딩</h5>
+{% highlight python %}
+DEFAULTS = { 
+    'UNICODE_JSON': True,
+    'COMPACT_JSON': True,
+    'STRICT_JSON': True,
+    'COERCE_DECIMAL_TO_STRING': True,
+    'UPLOADED_FILES_USE_URL': True,
+}
+{% endhighlight %}
+<p>json.dumps()를 통해 직렬화를 할 때 들어가는 옵션이다. 거의 바꿀 일은 없고 default 값을 사용하면 된다. </p>
+<br>
+<br>
+
+<h5>Browseable API</h5>
+{% highlight python %}
+DEFAULTS = { 
+    'HTML_SELECT_CUTOFF': 1000,
+    'HTML_SELECT_CUTOFF_TEXT': "More than {count} items...",
+}
+{% endhighlight %}
+<p>
+    - HTML_SELECT_CUTOFF : Choice 옵션에서 Option 최대 허용수<br>
+    - HTML_SELECT_CUTOFF_TEXT : 초과 시의 안내 메세지
+</p>
+<br>
+<br>
