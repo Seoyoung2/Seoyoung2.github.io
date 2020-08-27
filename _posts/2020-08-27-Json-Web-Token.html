@@ -1,0 +1,109 @@
+---
+layout: post
+title: "[DRF] Json Web Token 인증"
+subtitle: Django REST framework의 Token 인증 방식 중 하나인 JWT 인증에 대해 공부한다.
+category: "Django"
+comments: true
+---
+
+<p>DRF에서 기본지원하는 Token은 단순한 랜덤 문자열이며, 각 User와 1:1 매칭을 하고 토큰의 유효기간이 없다.</p>
+<p>기본적으로 Token 방식을 사용할 때, token은 안전한 장소에 보관해야 한다. 스마트폰 앱은 설치된 앱 별로 안전한 저장공간이 제공되지만, 웹브라우저에서는 없기 때문에 Token은 앱 환경에서만 권장된다. (웹 클라이언트 환경에서는 보안적인 측면에서 세션 인증이 나은 선택일 수 있다.)</p>
+<br>
+
+<h3>JWT 인증 방식</h3>
+<br>
+<p>JWT는 또 다른 Token의 한 형태이며, 데이터베이스에 저장하지 않아 데이터베이스를 조회하지 않아도 <b>로직만으로도 인증이 가능</b>하다.</p>
+<p>토큰 포맷은 <b>"헤더.내용.서명"</b>으로 서버 측에서 토큰 발급 시에 비밀키(SECREAT_KEY)로 서명을 하고, 발급시간 claim으로서 exp를 쓴다.</p>
+<p>서명을 하는 것일 뿐, 암호화가 아니기 때문에 보안에 중요한 데이터를 내용(payload)에 넣으면 안된다. 필요한 최소한의 정보만 담는 것을 권장한다. djangorestframework-jwt 에서는 payload 항목에 디폴트로 user_id, user_name, email을 사용한다.</p>
+<p>갱신(Refresh) 메커니즘을 지원하여, Token 유효기간(디폴트로 5분) 내에 필히 Refresh하거나 username/password를 통해 재인증을 받아야 한다.</p>
+<br>
+
+<h5>JWT 인증 사용하기</h5>
+<br>
+{% highlight Bash %}
+$ pip install djangorestframework-jwt
+{% endhighlight %}
+<p>JWT을 사용하기 위해서는 기존 프로젝트에 djangorestframework-jwt 를 설치한다.</p>
+
+{% highlight python %}
+# settings.py
+
+REST_FRAMEWORK = { 
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication', 
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+    ], 
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated', 
+    ],
+}
+
+JWT_AUTH = { 
+    'JWT_ALLOW_REFRESH': True,
+}
+{% endhighlight %}
+<p>JWT를 사용하기 위해 프로젝트의 settings.py 파일에서 몇가지 설정을 해준다. JWT_ALLOW_REFRESH 값은 디폴트로 False이기 때문에 갱신 기능을 사용할거라면 True로 재지정해준다.</p>
+
+{% highlight python %}
+# urls.py
+
+from rest_framework.authtoken.views import obtain_auth_token
+from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token, verify_jwt_token
+
+urlpatterns = [
+    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    url(r'^api-token-auth/$', obtain_auth_token),
+
+    url(r'^api-jwt-auth/$', obtain_jwt_token),
+    url(r'^api-jwt-auth/refresh/$', refresh_jwt_token),
+    url(r'^api-jwt-auth/verify/$', verify_jwt_token),
+
+    url(r'^blog/', include('blog.urls', namespace='blog')), 
+]
+{% endhighlight %}
+<p>urls.py 까지 설정을 해준다면 'api-jwt-auth/'로의 POST 요청을 username과 password를 함께 보내면 JWT 토큰을 발급받을 수 있다. 인증에 실패할 경우, <code>400 Bad Request</code> 응답을 받는다. 발급받은 JWT 토큰을 <a href="https://jwt.io/"><b>jwt.io</b></a>를 통해 검증해볼 수 있다.</p>
+<p>발급받은 JWT Token을 확인하려면 'api-jwt-auth/verify/' 주소로 토큰값을 넣어서 POST 요청을 보내면 된다. 검증에 성공할 경우, 검증한 토큰 응답이 온다.</p>
+<br><hr><br>
+
+<p>이렇게 JWT Token 을 발급받고, 검증하는 기능까지 구현되었다면 발급받은 JWT Token으로 포스팅 목록 API 요청을 보낼 수 있다. DRF Token에서는 인증헤더 시작문자열로 <b>"Token"</b>을 썼지만, 이젠 <b>"JWT"</b>를 사용한다. 인증이 성공할 경우, 해당 API 응답을 받는다.</p>
+<p>이제 매 API 요청마다 JWT 토큰을 인증헤더에 담아 전송해주면 된다.</p>
+{% highlight Bash %}
+$ http http://서비스주소/blog/api/post/ "Authorization: JWT 토큰"
+{% endhighlight %}
+<br>
+<h5>JWT Token 유효기간이 지난 경우</h5>
+{% highlight Bash %}
+$ http http://서비스주소/blog/api/post/ "Authorization: JWT 토큰"
+
+HTTP/1.0 401 Unauthorized
+{
+    "detail": "Signature has expired."
+}
+{% endhighlight %}
+<p>JWT 토큰은 유효기간이 있기 때문에 유효기간 내에 토큰을 갱신(Refresh)받아야한다. 유효기간이 지났을 경우, 위와 같은 <code>401 Unauthorized</code> 응답을 받는다.</p>
+<p>유효기간 내에는 token 만으로 갱신 받을 수 있지만, 유효기간이 지나면 다시 username/password 를 통해 인증을 받아야만 한다.</p>
+{% highlight Bash %}
+$ http POST http://서비스주소/api-jwt-auth/refresh/ token="토큰" 
+{
+    "token": "갱신받은 JWT 토큰" 
+}
+{% endhighlight %}
+<p>settings.JWT_AUTH의 JWT_ALLOW_REFRESH 설정이 True로 설정했다면 위와 같이 갱신(Refresh)을 진행할 수 있다.</p>
+<br>
+
+<h5>djangorestframework-jwt의 주요 settings</h5>
+<p>djangorestframework-jwt의 디폴트 settings는 다음과 같다.</p>
+{% highlight python %}
+JWT_AUTH = {
+    'JWT_SECRET_KEY': settings.SECRET_KEY,
+    'JWT_ALGORITHM': 'HS256',
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=300), 
+    'JWT_ALLOW_REFRESH': False,
+    'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=7),
+}
+{% endhighlight %}
+<p>토큰의 유효기간이 300초(5분)으로 설정되어 있어 앱의 기능에 따라 설정해주어야 한다.</p>
+<br>
+<br>
