@@ -1,0 +1,57 @@
+---
+layout: post
+title: "[DRF] Kakao + JWT 인증"
+subtitle: Android 앱에 Kakao + JWT 인증을 적용하는 법에 대해 공부한다.
+category: "Django"
+comments: true
+---
+
+<h3>전체 흐름</h3>
+<p>카카오, 페이스북 등의 SMS 연동 인증 방식을 JWT로 진행하기 위해서는, 카카오/페이스북으로부터 Access Token을 획득하여 이를 장고 서버를 통해 JWT 토큰을 획득하면 된다.</p>
+<p style="background-color: antiquewhite; padding: 18px;">
+    1. <b>(앱 - 카카오톡 서버)</b><br>
+     - 안드로이드 앱에서 "카카오톡 로그인" 버튼을 클릭하면, 카카오톡 서버와 인증을 수행<br>
+     - 카카오톡 서버와의 인증에 성공하면, 카카오톡으로부터 <code>Access Token</code> 을 획득<br>
+    <br>
+     2. <b>(앱 - 장고 서버)</b><br>
+     - 획득된 Access Token을 장고 서버 인증 Endpoint(/accounts/rest-auth/kakao/)를 통해, <code>JWT 토큰</code> 획득<br>
+     - 획득한 JWT 토큰이 만료되기 전에, 갱신(refresh)<br>
+     - 획득한 JWT 토큰이 만료되었다면, Access Token을 서버로 전송하여 <code>JWT 토큰</code> 재획득
+</p>
+<br>
+<h5>Kakao 관리자 페이지에서 App Key 얻기</h5>
+<p>카카오 연동 인증을 구현하기 위해서는 카카오 개발자 페이지에 접속한다. 거기서 새로운 애플리케이션을 생성한 후, "사용자 관리" 옵션을 켜고 "기본 정보"에서 App Key 를 메모한다.</p>
+<p>DRF에서 필요한 App Key 로는 <code>네이티브 앱 키</code>와 <code>REST API 키</code>가 있다. 네이티브 앱 키는 안드로이드/아이폰 앱에서 kakao_app_key 값으로 활용되는 키이고, REST API 키는 Django Server 측에서 활용되는 키이다.</p>
+<br>
+<h5>Dajgno 서버 설정</h5>
+<p>kakao 관리자 페이지에서 App Key를 얻었으면, django-rest-auth / django-allauth를 통해 카카오/페이스북 인증을 적용해본다.</p>
+<p>방법은 아래와 같다.</p>
+<p style="margin-left: 30px;">
+    1. django-rest-auth의 <a href="">설치가이드</a>대로 진행<br>
+    2. /admin/ 에서 새 "Social Application" 생성 - kakao<br>
+        - Provider: kakao <br>
+        - Name: 자유 <br>
+        - Clinet id: "네이티브 앱 키" 지정 <br>
+        - Secret key: 아무거나 <br>
+        - Sites: example.com 선택<br>
+</p>
+
+<p>앱에서 로그인을 수행 후에 Access Token을 획득할 수 있다. 또는, 카카오 개발자 페이지에서 REST API 도구 페이지를 통해 획득할 수도 있다. Access Token을 획득한 후, 이를 통해 JWT토큰을 얻는다.</p>
+{% highlight Bash %}
+$ http POST http://localhost:8000/accounts/rest-auth/kakao/ access_token="Kakao로그인을통해획득한JWT토큰"
+
+{
+    "token": "JWT 토큰 값",
+    "user": { 
+        "email": "",
+        "first_name": "",
+        "last_name": "",
+        "pk": 2,
+        "username": "user"
+    } 
+}
+{% endhighlight %}
+<br>
+<p>이제 장고 서버에서 할 일은 끝이 났고 앱 단에서 추가적인 설정과 코드를 작성해야한다. 그 부분에 대해서는 여기서는 다루지 않는다.</p>
+<br>
+<br>
