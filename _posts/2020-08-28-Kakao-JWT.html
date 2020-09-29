@@ -23,7 +23,7 @@ comments: true
 <p>카카오 연동 인증을 구현하기 위해서는 카카오 개발자 페이지에 접속한다. 거기서 새로운 애플리케이션을 생성한 후, "사용자 관리" 옵션을 켜고 "기본 정보"에서 App Key 를 메모한다.</p>
 <p>DRF에서 필요한 App Key 로는 <code>네이티브 앱 키</code>와 <code>REST API 키</code>가 있다. 네이티브 앱 키는 안드로이드/아이폰 앱에서 kakao_app_key 값으로 활용되는 키이고, REST API 키는 Django Server 측에서 활용되는 키이다.</p>
 <br>
-<h5>Dajgno 서버 설정</h5>
+<h5>Django 서버 설정</h5>
 <p>kakao 관리자 페이지에서 App Key를 얻었으면, django-rest-auth / django-allauth를 통해 카카오/페이스북 인증을 적용해본다.</p>
 <p>방법은 아래와 같다.</p>
 <p style="margin-left: 30px;">
