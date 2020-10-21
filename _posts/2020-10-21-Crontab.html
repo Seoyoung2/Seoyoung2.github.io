@@ -1,0 +1,68 @@
+---
+layout: post
+title: "Django Crontab 활용하기"
+subtitle: 장고 크론탭(Django-Crontab)에 대해 알아보고 프로젝트에 적용한다.
+category: "Django"
+comments: true
+---
+
+<p>요즘 진행하고 있는 IOS 프로젝트가 있다. 거기서 나는 백엔드 파트를 맡았는데, API서버를 구성하는 역할을 한다.</p>
+<p>보통 API 서버에서는 클라이언트가 요청을 보내면 서버가 그 요청에 맞는 작업을 수행한 후, 응답을 보낸다. 하지만 우리 프로젝트에서 필요한 기능 중, 클라이언트의 요청 없이 서버 내에서 주기적으로 특정 작업을 처리해야하는 기능이 있다.</p>
+<p>이런 경우에 Linux/Unix에서는 <b>cron/crontab</b>을 사용하여 스케줄러를 구현하는데, Django에서는 <b>django-crontab</b> 라이브러리로 쉽게 구현할 수 있다. 단, django-crontab은 리눅스 기반이기 때문에 윈도우에서는 작동하지 않는다.</p>
+<br>
+<h3>Django Crontab</h3>
+<p>crontab은 서버 내의 특정 작업(또는 명령)을 특정 주기로 스스로 실행하도록 하는 것을 뜻한다.</p>
+
+<h5>django-crontab 설치</h5>
+{% highlight Bash %}
+$ pip install django-crontab
+{% endhighlight %}
+<br>
+
+<h5>django-crontab setting</h5>
+<p>설치 후에는 settings.py 의 INSTALLED_APPS에 해당 모듈을 추가해준다.</p>
+{% highlight python %}
+INSTALLED_APPS = (
+    'django_crontab', 
+    . . .
+)
+{% endhighlight %}
+<br>
+
+<h5>cronjob 추가</h5>
+<p>자신의 앱 안에 <code>cron.py</code>파일을 만든 후, 스케줄 작업을 등록하기 위한 함수를 만들어준다. (함수의 위치는 상관 없음)</p>
+{% highlight python %}
+# myapp/cron.py
+
+def crontab_job():
+    . . .
+{% endhighlight %}
+<br>
+
+<h5>settings.py에 crontab 작업 등록</h5>
+{% highlight python %}
+CRONJOBS = [
+    ('*/5 * * * *', 'app.cron.crontab_job')
+]
+{% endhighlight %}
+<p>첫번째 인자로 <code>분(0-59) 시(0-23) 일(1-31) 월(1-12) 요일(0-6)</code>(0:일요일, 1:월요일, 2:화요일, …, 6:토요일) 순으로 각 작업이 실행될 때를 입력한 후, 
+    두번째 인자로는 <code>app이름.file이름.function이름</code>을 입력해준다. </p>
+
+{% highlight python %}
+CRONJOBS = [
+    # 매주 일요일 11:59 행성 삭제 / 월요일 0:0 행성 생성
+    ('59 23 * * 0', 'planets.cron.delete_planet'),
+    ('0 0 * * 1', 'planets.cron.create_planet'),
+]
+{% endhighlight %}
+<p>나 같은 경우에는 일주일 단위로 생성되고 삭제되는 데이터가 필요했기 때문에 위와 같이 작업을 등록해주었다.</p>
+
+<h5>crontab 명령어</h5>
+<p>이렇게 크론탭 작업을 추가하고 설정까지 마쳤다면 서버에서 crontab 작업들을 처리해줘야한다. add를 수행하면 settings.py에 명시해준 작업들을 시작한다.</p>
+{% highlight Bash %}
+$ python manage.py crontab add 		# 등록된 job들을 모두 실행
+$ python manage.py crontab remove 	# 등록된 job들을 모두 제거
+$ python manage.py crontab show		# 등록된 job들을 모두 보기
+{% endhighlight %}
+<br>
+<br>
