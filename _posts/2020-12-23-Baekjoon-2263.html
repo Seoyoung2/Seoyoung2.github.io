@@ -1,0 +1,56 @@
+---
+layout: post
+title: "[python] 트리의 순회 (Baekjoon, 2263)"
+subtitle: 백준의 "트리의 순회"문제(2263)를 분할정복 기법을 사용하여 해결한다.
+category: "Algorithm"
+comments: true
+---
+
+<h4>문제(Link) : <a href="https://www.acmicpc.net/problem/2263">https://www.acmicpc.net/problem/2263</a></h4>
+<hr>
+<p>백준 온라인 저지에 있는 <b>분할정복</b> 문제이다. 이진 트리의 in-order과 post-order가 주어지면 결과값으로 pre-order을 구하는 문제이다.</p>
+<p>예전에 트리의 순회에 대한 내용을 배운 적은 있지만 생소해서 다시 찾아보았다.</p>
+<p style="margin: -20px 30px 30px 30px;">
+    1. <b>in-order</b> : (left) - root - (right)<br>
+    2. <b>pre-order</b> : root - (left) - (right)<br>
+    3. <b>post-order</b> : (left) - (right) - root<br>
+</p>
+<p>여기서 우리가 알고있는 정보는 in-order과 post-order이고 in-order에서는 root를 기준으로 앞은 left sub tree, 뒤는 right sub tree라는 사실을, 
+    그리고 post-order의 마지막 노드는 root 노드라는 점을 이용해서 코드를 구현한다.
+</p>
+<p>
+    먼저 post-order로 root 노드를 구하고 in-order를 통해 left와 right로 나누는 것을 반복한다. 또한 여기서 중요한 점은 in-order의 입력값을 그대로 받는 것이 아닌 그 위치를 저장해야한다(pos).
+    그 이유는 인자를 찾을 때 한번에 찾기 위해서이다.
+</p>
+{% highlight python %}
+import sys
+sys.setrecursionlimit(10**6)
+
+
+def pre_order(istart, iend, pstart, pend):  # 중위순회 범위, 후위순회 범위
+    if istart > iend or pstart > pend:
+        return
+    root = postorder[pend]
+    print(root, end=' ')
+    
+    # devide
+    pre_order(istart, pos[root]-1, pstart, pstart+pos[root]-istart-1)
+    pre_order(pos[root]+1, iend, pstart+pos[root]-istart, pend-1)
+
+
+n = int(input())
+inorder = list(map(int, input().split()))
+postorder = list(map(int, input().split()))
+
+pos = [0] * (n+1)
+for i in range(n):
+    pos[inorder[i]] = i
+
+pre_order(0, n-1, 0, n-1)
+
+{% endhighlight %}
+
+<p>이렇게 in-order과 post-order의 left 서브트리와 right 서브트리를 divide 하면서 문제를 해결한다. 
+    pre_order()함수를 재귀호출 할 때의 인자 중, post-order의 범위를 생각하는게 까다로웠다.
+</p>
+<p>분할정복이 익숙하지 않아 어려웠던 문제이다,,</p>
