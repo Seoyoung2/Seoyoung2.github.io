@@ -1,0 +1,72 @@
+---
+layout: post
+title: "[python] 버블 소트 (Baekjoon, 1517)"
+subtitle: 백준의 "버블 소트"문제(1517)를 분할정복 기법을 사용하여 해결한다.
+category: "Algorithm"
+comments: true
+---
+
+<h4>문제(Link) : <a href="https://www.acmicpc.net/problem/1517">https://www.acmicpc.net/problem/1517</a></h4>
+<hr>
+<p>백준 온라인 저지에 있는 <b>분할정복</b> 문제이다. 수열이 주어지고 단순히 버블 소트를 실행할 때, swap이 일어나는 횟수를 구하는 문제였다.</p>
+<p>하지만 버블 소트(bubble sort) 로직을 구현해서 swap 횟수를 구하니 시간복잡도가 O(n^2)이 되어 시간초과가 발생했고 찾아보니 시간복잡도가 O(NlogN)이 되는 다른 방법을 써야하는 문제였다. 합병 정렬(merge sort)이나 인덱스 트리를 사용하는 방법이 있었고
+    나는 합병 정렬을 사용해서 문제를 해결하였다.
+</p>
+<p>합병 정렬은 리스트의 길이가 1이 될 때까지 반으로 나눈 후(분할, divide), 각 리스트들을 정렬하며 순서대로 다시 합치는(merge) 정렬 방식이다. </p>
+<p>이 때, swap 하는 횟수를 구하는데 merge 하는 과정에서 자신보다 앞의 인덱스에서 자신보다 큰 값의 수를 구하면 된다. merge를 하는 다양한 방법들이 있지만
+    나는 새로운 res라는 리스트를 정의한 뒤, 한 리스트를 나눈 left와 right 배열을 검사하며 새로운 res 리스트를 채워서 리턴하는 방식으로 진행하였다.
+</p>
+<p>이 때, left의 원소가 새로운 배열에 추가될 경우 right에서 새로운 배열로 먼저 채워진 수(cnt)만큼 swap을 진행하고(ans += cnt), 
+    right의 원소가 새로운 배열에 추가될 경우 left에서 새로운 배열로 채워지지 않은 left 원소 개수만큼 swap을 진행한다(cnt += 1).
+</p>
+{% highlight python %}
+import sys
+sys.setrecursionlimit(10**6)
+
+
+def merge_sort(arr):
+    global ans
+    if len(arr) < 2:
+        return arr
+    mid = len(arr) // 2
+
+    # divide
+    left = merge_sort(arr[:mid])
+    right = merge_sort(arr[mid:])
+
+    # merge
+    cnt = 0
+    res = []
+    l = r = 0
+    while l < len(left) and r < len(right):
+        if left[l] <= right[r]:
+            # left의 원소가 새로운 배열(res)에 추가될 경우,
+            # right에서 res로 먼저 채워진 수(cnt) 만큼 swap 진행
+            res.append(left[l])
+            l += 1
+            ans += cnt
+        else:
+            # right의 원소가 새로운 배열(res)에 추가될 경우,
+            # left에서 res로 채워지지 않은 left 원소 개수만큼 swap 진행
+            res.append(right[r])
+            r += 1
+            cnt += 1
+    while l < len(left):
+        res.append(left[l])
+        l += 1
+        ans += cnt
+    while r < len(right):
+        res.append(right[r])
+        r += 1
+    return res
+
+
+N = int(input())
+A = list(map(int, input().split()))
+
+ans = 0
+merge_sort(A)
+print(ans)
+{% endhighlight %}
+
+<p>역시 분할정복 알고리즘 문제는 어려웠다..</p>
