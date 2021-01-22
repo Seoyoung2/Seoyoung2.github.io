@@ -1,0 +1,166 @@
+---
+layout: post
+title: "[Java] 자바의 싱글톤 패턴 (Singleton Pattern)"
+subtitle: static modifier와 getInstance()를 이용한 싱글톤 패턴에 대해 공부한다.
+category: "Java"
+comments: true
+---
+<h3>JAVA의 Singleton Pattern</h3>
+<p>자바의 다양한 디자인 패턴들 중, '싱글톤 패턴'에 대해 간단하게 알아본다. 싱글톤 패턴이란 클래스(Class)를 통해서 생성된 객체는 오직 <b>하나</b>임을 보장하는 패턴이다. 
+프로그램 상에서 동일한 커넥션 객체를 만들거나 하나의 객체만 사용해야하는 클래스를 만들 때 유용하다.
+</p>
+
+<h5>Singleton 구현</h5>
+<p>싱글톤을 구현하는데 가장 중요한 두가지가 있다. 첫 번째는 생성자는 무조건 <code>private modifier</code>로 선언해야한다. 외부에서 생성자 호출을 못하게 하기 위함이다. 
+  다음으로는 <code>static modifier</code> 메서드를 통해 생성된 한 개의 객체를 전달해야한다. 보통 <code>getInstance()</code>라는 이름의 static 메서드를 생성한다.
+</p>
+
+{% highlight java %}
+public class Singleton {
+	private static Singleton instance;
+	
+	private Singleton() {}
+  
+	public static Singleton getInstance() {
+		if (instance == null) {
+			instance = new Singleton();
+		}
+		return instance;
+	}
+}
+{% endhighlight %}
+
+<p>위 코드와 같이 간단한 Singleton 클래스를 만들어보았다. instance와 Singleton 생성자를 <code>private</code>로 지정하였기 때문에 외부에서는 
+접근할 수 없고 무조건 <code>getInstance()</code>를 통해 접근해야한다. 또한, <code>getInstance()</code>는 내부 로직을 통해 프로그램 전반에 걸쳐 
+하나의 인스턴스를 유지한다.</p>
+
+<br>
+<h5>또 다른 예시</h5>
+<p>
+좀 더 복잡하게 Phone이라는 객체와 이를 관리하는 PhoneManager를 싱글톤패턴으로 구현해보았다.
+</p>
+<p>아래는 Singleton 패턴을 적용하기 위해 임의로 만든 <code>Phone</code>클래스이다.</p>
+{% highlight java %}
+public class Phone {
+	private String pno;
+	private String name;
+	private int price;
+
+	public phone() {}
+	public phone(String pno, String name, int price) {
+		this.pno = p;
+		this.name = name;
+		this.price = price;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append(pno).append("\t| ").append(name).append("\t| ").append(price);
+		return builder.toString();
+	}
+
+	public String getpno() {
+		return pno;
+	}
+	public void setpno(String pno) {
+		this.pno = pno;
+	}
+	public String getname() {
+		return name;
+	}
+	public void setname(String name) {
+		this.name = name;
+	}
+	public int getPrice() {
+		return price;
+	}
+	public void setPrice(int price) {
+		if (price > -1) {
+			this.price = price;
+		} else {
+			System.out.println("가격을 0원이상으로 설정해주세요.");
+		}
+	}
+}
+{% endhighlight %}
+
+<p>아래는 Phone 객체 관리를 위해 만든 <code>PhoneManager</code>클래스이다. <code>private</code>, <code>static</code>을 
+지정해 instance를 만들고 PhoneManager의 생성자에서 phone객체 배열 <code>phones</code>를 선언한다.
+</p>
+{% highlight java %}
+import java.util.Arrays;
+
+public class PhoneManager {
+	private static PhoneManager instance;
+	private static int MAX_SIZE = 100;
+	
+	private Phone[] phones;
+	private int size;
+	
+	private PhoneManager() {
+		phones = new Phone[MAX_SIZE];
+	}
+	public static PhoneManager getInstance() {
+		if (instance == null) {
+			instance = new PhoneManager();
+		}
+		return instance;
+	}
+	
+	public void add(phone phone) {
+		if (size < MAX_SIZE) {
+			phones[size++] = phone;
+		} else {
+			System.out.println("더이상 공간이 없습니다.");
+		}
+	}
+	public void remove(String pno) {
+		for (int i = 0; i < size; i++) {
+			if (pno.equals(phones[i].getpno())) {
+				phones[i] = phones[--size];
+				break;
+			}
+		}
+	}
+	public Phone[] getList() {
+		return Arrays.copyOf(phones, size);
+	}
+	public Phone searchBypno(String pno) {
+		for (int i = 0; i < size; i++) {
+			if (pno.equals(phones[i].getpno())) {
+				return phones[i];
+			}
+		}
+		return null;
+	}
+}
+
+{% endhighlight %}
+
+<p>그 후, 아래와 같이 메인 메서드를 호출한다. PhoneManager의 생성자를 private로 지정했기 때문에 메인 메서드에서는 new를 통해 생성자를 호출하는 대신,
+	 <code>getInstance()</code>를 통해 instance를 생성한다.
+</p>
+{% highlight java %}
+public class PhoneTest {
+
+	public static void main(String[] args) {
+		PhoneManager mgr = PhoneManager.getInstance();
+		
+		mgr.add(new Phone("21424", "iphone 11 pro", 15000));
+		mgr.add(new Phone("21425", "iphone SE", 25000));
+		
+		mgr.remove("21424");
+		
+		Phone[] phones = mgr.getList();
+		for (Phone phone : phones) {
+			System.out.println(phone);
+		}
+	}
+}
+{% endhighlight %}
+<br>
+<h5>Problem</h5>
+<p>주의할 점은 싱글턴 패턴을 설계할 때 '동시성(Concurrency)'문제를 고려해야한다는 점이다. 단일쓰레드에서는 문제가 없지만 멀티쓰레드 환경에서는 
+	위와 같은 코드를 이용하면 <code>getInstance()</code>를 조건문을 동시에 두 번 돌 수 있기 때문에 하나의 인스턴스가 아닌 여러 개의 인스턴스가 발생할 위험이 있다.
+</p>
