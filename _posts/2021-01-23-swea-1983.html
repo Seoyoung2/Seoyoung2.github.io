@@ -1,0 +1,56 @@
+---
+layout: post
+title: "[java] 조교의 성적 매기기 (SWEA, 1983)"
+subtitle: SWEA의 "조교의 성적 매기기"문제(1983)를 해결한다.
+category: "Algorithm"
+comments: true
+---
+
+<h4>문제(Link) : <a href="https://swexpertacademy.com/main/code/problem/problemDetail.do?contestProbId=AV5PwGK6AcIDFAUq&categoryId=AV5PwGK6AcIDFAUq&categoryType=CODE&&&">1982. 조교의 성적 매기기</a></h4>
+<hr>
+<p>테스트케이스(T)와 전체 학생 수(N), 성적을 알고 싶은 학생 번호(K)가 주어지고 다음 줄에 전체 학생의 중간고사, 기말고사, 과제 점수가 주어진다. 이 세가지 항목을 평가하여 
+    성적을 매기고 순위를 결정한 후, K학생의 순위를 구해 학점을 내는 문제이다.
+</p>
+<p>10가지의 학점이 있다 가정하기 때문에 순위를 구한 후, 전체 학생 수의 비율에 맞는 학점을 구해하하는 점이 까다로운 문제였다.</p>
+<p>먼저 학생들의 세가지 점수를 주어진 비율로 계산해 <code>scores</code>배열에 저장했고, 정렬 후 K학생의 순위를 구하고 10가지의 학점을 저장해놓은 <code>credit</code>배열에 
+<code>credit[i/(n/10)]</code>로 접근해 구하고자하는 최종 학점을 구했다.</p>
+<p>구현 코드는 아래와 같다.</p>
+{% highlight java %}
+import java.util.Arrays;
+import java.util.Scanner;
+
+public class Solution_1983 {
+
+	public static void main(String[] args) {
+		Scanner sc = new Scanner(System.in);
+		int n, k, a, b, c;
+		double[] scores;
+		String[] credit = {"D0", "C-", "C0", "C+", "B-", "B0", "B+", "A-", "A0", "A+"}; 
+		
+		int T = sc.nextInt();
+		for (int tc = 1; tc <= T; tc++) {	
+			n = sc.nextInt();
+			k = sc.nextInt();
+			scores = new double[n];
+			for (int i = 0; i < n; i++) {
+				a = sc.nextInt();
+				b = sc.nextInt();
+				c = sc.nextInt();
+				scores[i] = 0.35*a + 0.45*b + 0.2*c;
+			}
+			
+			String ans = "";
+			double goal = scores[k-1];
+			Arrays.sort(scores);
+			for (int i = 0; i < n; i++) {
+				if (goal == scores[i]) {
+                    ans = credit[i/(n/10)];
+                    break;
+				}
+			}
+			System.out.println("#" + tc + " " + ans);
+		}
+		sc.close();
+	}
+}
+{% endhighlight %}
