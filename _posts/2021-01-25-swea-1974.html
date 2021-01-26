@@ -1,0 +1,71 @@
+---
+layout: post
+title: "[java] 스도쿠 검증 (SWEA, 1974)"
+subtitle: SWEA의 "스도쿠 검증"문제(1974)를 해결한다.
+category: "Algorithm"
+comments: true
+---
+
+<h4>문제(Link) : <a href="https://swexpertacademy.com/main/code/problem/problemDetail.do?contestProbId=AV5Psz16AYEDFAUq&categoryId=AV5Psz16AYEDFAUq&categoryType=CODE">1974. 스도쿠 검증</a></h4>
+<hr>
+<p>스도쿠 게임 규칙을 알고 스도쿠를 검증하는 문제이다. 행(row)으로 1부터 9중에 같은 숫자가 있는지 검증, 열(row)로 같은 숫자가 있는지 검증, 그리고 마지막으로는
+	전체 9x9 보드를 9등분 했을 때(3x3) 같은 숫자가 있는지 검증하여 유효한 스도쿠판으면 1을, 유효하지 않으면 0을 출력한다.
+</p>
+<p>처음에는 2중 for문으로 모든 칸을 검사하며 그 안에 또 2중 for문으로 행과 열을 검사하고 구역 별로 검사하는 방식을 생각했지만 검사하려면 매번 배열을 생성해야하는 점부터
+	문제가 너무 복잡해보여 1부터 9를 더하면 45가 된다는 점을 이용해 문제를 해결하였다.
+</p>
+<p>구현 코드는 아래와 같다.</p>
+{% highlight java %}
+import java.util.Scanner;
+
+public class Solution_1974 {
+
+	public static void main(String[] args) {
+		Scanner sc = new Scanner(System.in);
+		int T = sc.nextInt();
+		int[][] board = new int[9][9];
+		for (int tc = 1; tc <= T; tc++) {
+			int ans = 1;
+			for (int i = 0; i < 9; i++)
+				for (int j = 0; j < 9; j++)
+					board[i][j] = sc.nextInt();
+			
+			// row, col 검사
+			for (int i = 0; i < 9; i++) {
+				int rsum = 0;
+				int csum = 0;
+				for (int j = 0; j < 9; j++) {
+					rsum += board[i][j];
+					csum += board[j][i];
+				}
+				if (rsum != 45 || csum != 45) {
+					ans = 0;
+					break;
+				}
+			}
+			// 유효하지 않은 경우 검사 stop
+			if (ans == 0) {
+				System.out.println("#" + tc + " 0");
+				continue;
+			}
+
+			// 정사각형 구역 검사
+			for (int i = 0; i < 9; i+=3) {
+				for (int j = 0; j < 9; j+=3) {
+					int sum = 0;
+					for (int x = 0; x < 3; x++)
+						for (int y = 0; y < 3; y++)
+							sum += board[i+x][j+y];
+					if (sum != 45) {
+						ans = 0;
+						break;
+					}
+				}
+				if (ans == 0) break;					
+			}
+			System.out.println("#" + tc + " " + ans);
+		}
+		sc.close();
+	}
+}
+{% endhighlight %}
