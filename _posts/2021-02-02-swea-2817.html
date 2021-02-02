@@ -1,0 +1,52 @@
+---
+layout: post
+title: "[java] 부분 수열의 합 (SWEA, 2817)"
+subtitle: SWEA의 "부분 수열의 합"문제(2817)를 해결한다.
+category: "Algorithm"
+comments: true
+---
+
+<h4>문제(Link) : <a href="https://swexpertacademy.com/main/code/problem/problemDetail.do?contestProbId=AV7IzvG6EksDFAXB&categoryId=AV7IzvG6EksDFAXB&categoryType=CODE&problemTitle=2817&orderBy=FIRST_REG_DATETIME&selectCodeLang=ALL&select-1=&pageSize=10&pageIndex=1">2817. 부분 수열의 합</a></h4>
+<hr>
+<p>N개의 자연수가 주어졌을 때, 최소 1개 이상의 수를 선택하여 그 합이 K가 되는 경우의 수를 구하는 문제이다. 흔하게 볼 수 있는 문제로 DFS와 재귀함수를 통해 해결할 수 있다.</p>
+<p>나는 재귀함수를 이용해 문제를 해결하였고 구현 코드는 아래와 같다. 매번 간단한 <code>Scanner</code>로 입출력을 받다가 새로운 <code>BufferedReader</code>와 <code>StringTokenizer</code>를 사용해보았다.</p>
+{% highlight java %}
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+
+public class Solution_2817 {
+	static int n, k, cnt;
+	static int[] num;
+	public static void main(String[] args) throws Exception {
+		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+		StringTokenizer st;
+		
+		int T = Integer.parseInt(in.readLine());
+		for (int tc = 1; tc <= T; tc++) {
+			st = new StringTokenizer(in.readLine());
+			n = Integer.parseInt(st.nextToken());
+			k = Integer.parseInt(st.nextToken());
+			
+			st = new StringTokenizer(in.readLine());
+			num = new int[n];
+			for (int i = 0; i < n; i++)
+				num[i] = Integer.parseInt(st.nextToken());
+			
+			cnt = 0;
+			solve(0, 0);
+			System.out.println("#" + tc + " " + cnt);
+		}
+	}
+	
+	private static void solve(int idx, int sum) {
+		if (sum == k) {
+			cnt++;
+			return;
+		}
+		else if (sum > k || idx >= n)	return;
+		solve(idx+1, sum+num[idx]);
+		solve(idx+1, sum);
+	}
+}
+{% endhighlight %}
