@@ -1,0 +1,61 @@
+---
+layout: post
+title: "[java] 달팽이 숫자 (SWEA, 1954)"
+subtitle: SWEA의 "달팽이 숫자"문제(1954)를 해결한다.
+category: "Algorithm"
+comments: true
+---
+
+<h4>문제(Link) : <a href="https://swexpertacademy.com/main/code/problem/problemDetail.do?problemLevel=2&contestProbId=AV5PobmqAPoDFAUq&categoryId=AV5PobmqAPoDFAUq&categoryType=CODE&problemTitle=&orderBy=FIRST_REG_DATETIME&selectCodeLang=JAVA&select-1=2&pageSize=10&pageIndex=2">1954. 달팽이 숫자</a></h4>
+<hr>
+<p>(0.0)에서 시작해 시계방향으로 달팽이 숫자를 입력한 2차원 배열을 출력하는 문제이다. 문제 이해하기도 쉽고 짧아서 쉽게봤지만 딱 보이는 규칙이 없어서 D2였지만 힘들었던 문제이다.</p>
+<p>규칙을 찾다가 n이 5라면 오른쪽으로 4번, 아래로 4번, 왼쪽으로 4번, 위로 3번, 오른쪽으로 3번 ... 이렇게 4가지 방향이 반복되는데 이동하는거리는 4, 4, 4, 3, 3, 2, 2, 1로 처음만 3번이고 그 후부터는 두번 이동하는 것을 알 수 있었다.</p>
+<p>그래서 첫번째만 예외처리(num==1)를 해주었고 num을 계속 증가시켜주면서 2차원 배열을 채우기 때문에 num==N*N이면 while문을 빠져나가도록 구현했다.</p>
+<p>구현 코드는 아래와 같다.</p>
+{% highlight java %}
+import java.util.Scanner;
+
+public class Solution_1954 {
+
+	public static void main(String[] args) {
+		Scanner sc = new Scanner(System.in);
+		
+		int T = sc.nextInt();
+		for (int tc = 1; tc <= T; tc++) {
+			int n = sc.nextInt();
+			int[][] arr = new int[n][n];
+			arr[0][0] = 1;
+			
+			int x = 0, y = 0;
+			int num = 1, step = n-1;
+			
+			while(true) {
+				if(num == n*n) break;
+				if(num==1) {
+					for (int i =0; i < step; i++)
+						arr[x][++y] = ++num;
+				} 
+				for (int i = 0; i < step; i++)
+					arr[++x][y] = ++num;
+				for (int i = 0; i < step; i++)
+					arr[x][--y] = ++num;
+				step--;
+				for (int i = 0; i < step; i++)
+					arr[--x][y] = ++num;
+				for (int i =0; i < step; i++)
+					arr[x][++y] = ++num;
+				step--;
+			}
+			System.out.println("#" + tc);
+			for (int[] is : arr) {
+				for (int i : is) {
+					System.out.print(i + " ");
+				}
+				System.out.println();
+			}
+
+		}
+		sc.close();
+	}
+}
+{% endhighlight %}
