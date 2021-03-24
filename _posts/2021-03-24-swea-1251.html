@@ -11,6 +11,8 @@ comments: true
 <p>최소신장트리 문제로 Kruskal, Prim 알고리즘을 써서 해결해야하는 문제였다. 주어진 값들의 범위가 커 인접행렬 대신 인접 리스트를 구성했다.</p>
 <p>참고자료 없이도 Kruskal, Prim 알고리즘을 구현할 수 있도록 암기가 필요할 듯하다.(ㅠㅠ)</p>
 <h4>1. Kruskal 알고리즘 이용</h4>
+<p>먼저 크루스칼은 <code>Edge</code>클래스를 만들어서 가능한 모든 간선을 <code>PriorityQueue</code>에 저장한다. (방향 없는 그래프이므로 내부 for문을 i+1부터 시작해서 중복을 없앤다.)</p>
+<p>그리고 비용이 가장 작은 간선부터 <code>Union-Find</code>기법으로 사이클이 만들어지지 않도록 간선을 선택한다. 간선을 선택하는 개념이므로 <code>cnt == N-1</code>이면 종료한다.</p>
 {% highlight java %}
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -98,6 +100,10 @@ public class Solution_1251_Kruskal {
 
 <br>
 <h4>2. Prim 알고리즘 이용</h4>
+<p>kruskal보다 짧지만 더 복잡했던거 같다. kruskal에서는 Edge 클래스를 만들었지만 Prim은 <code>Node</code>클래스를 사용한다.</p>
+<p>그리고 <code>LinkedList<Node>[] list</code>를 사용해 모든 간선을 넣어준다. 여기서는 연결되어진 두 노드에서 서로에게 갈 수 있도록 같은 간선이어도 중복해서 넣어준다.</p>
+<p>위와 마찬가지로 <code>PriorityQueue</code>를 이용하는데 0번 노드부터 시작하도록 <code>Node(0,0)</code>을 초기값으로 준다.</p>
+<p>그리고 방문체크를 하면서 방문한 노드들과 연결된 노드들의 비용이 작은 것 부터 선택한다. 노드를 선택하는 개념이므로 <code>cnt == N</code>이면 종료한다.</p>
 {% highlight java %}
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -107,7 +113,7 @@ import java.util.PriorityQueue;
 import java.util.StringTokenizer;
 
 public class Solution_1251_Prim {
-	static class Edge implements Comparable<Edge>{
+	static class Node implements Comparable<Node>{
 		int to;
 		long cost;
 		Edge(int to, long cost){
@@ -116,7 +122,7 @@ public class Solution_1251_Prim {
 		}
 		
 		@Override
-		public int compareTo(Edge o) {
+		public int compareTo(Node o) {
 			return Long.compare(this.cost, o.cost);
 		}
 	}
@@ -140,29 +146,29 @@ public class Solution_1251_Prim {
 				Y[i] = Long.parseLong(st.nextToken());
 			double E = Double.parseDouble(br.readLine());
 
-			LinkedList<Edge>[] list = new LinkedList[N];    // 가능한 모든 간선의 비용을 저장
+			LinkedList<Node>[] list = new LinkedList[N];    // 가능한 모든 간선의 비용을 저장
 			for (int i = 0; i < N; i++) {
 				list[i] = new LinkedList<>();
 				for (int j = 0; j < N; j++) {
 					if(i == j)	continue;
 					long L = (X[i]-X[j])*(X[i]-X[j]) + (Y[i]-Y[j])*(Y[i]-Y[j]);
-					list[i].add(new Edge(j, L));
+					list[i].add(new Node(j, L));
 				}
 			}
 			
-			PriorityQueue<Edge> pq = new PriorityQueue<>();
+			PriorityQueue<Node> pq = new PriorityQueue<>();
 			pq.add(new Edge(0, 0));
 			long ans = 0;
 			int cnt = 0;
 			while(!pq.isEmpty()) {
-				Edge e = pq.poll();
-				if(visit[e.to])	continue;
-				visit[e.to] = true;
-				ans += e.cost;
+				Node n = pq.poll();
+				if(visit[n.to])	continue;
+				visit[n.to] = true;
+				ans += n.cost;
 				if(++cnt == N)	break;
 				
-				for (Edge edge : list[e.to]) {
-					if(!visit[edge.to])	pq.add(edge);
+				for (Node node : list[n.to]) {
+					if(!visit[node.to])	pq.add(node);
 				}
 			}
 			System.out.println("#"+tc+" "+Math.round(ans*E));
